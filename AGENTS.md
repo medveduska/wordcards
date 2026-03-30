@@ -1,0 +1,43 @@
+# AGENTS.md
+
+## Scope
+
+This repository contains a Rust workspace for a Yew frontend application. The active Rust workspace root is `flashcards/`.
+
+## Working Rules
+
+- Keep generated output out of version control. Do not commit `target/` or `flashcards/frontend/dist/`.
+- Prefer small, responsibility-focused Rust modules over expanding `main.rs`.
+- Keep app behavior stable unless the task explicitly calls for a product change.
+- Preserve the current storage format unless a migration is part of the task.
+
+## Project Layout
+
+- `flashcards/Cargo.toml`: workspace manifest.
+- `flashcards/frontend`: Yew frontend crate.
+- `flashcards/frontend/src/app.rs`: main application component and orchestration.
+- `flashcards/frontend/src/model.rs`: serializable domain types.
+- `flashcards/frontend/src/storage.rs`: browser local-storage helpers.
+- `flashcards/frontend/src/csv_io.rs`: CSV parsing and export helpers.
+
+## Validation Commands
+
+Use these commands from the repository root:
+
+```powershell
+cargo fmt --manifest-path .\flashcards\Cargo.toml
+cargo check --manifest-path .\flashcards\Cargo.toml
+```
+
+Run the frontend locally:
+
+```powershell
+cd .\flashcards\frontend
+trunk serve
+```
+
+## Refactor Guidance
+
+- If UI code grows, split presentational sections into additional modules under `flashcards/frontend/src/`.
+- Keep pure data and transformation logic outside Yew callbacks when practical so it remains easy to test.
+- Prefer fixing structure and ownership boundaries before adding abstractions.

@@ -1,0 +1,8 @@
+{
+    "rust-analyzer.linkedProjects": [
+        "flashcards/Cargo.toml"
+    ],
+    "rust-analyzer.cargo.targetDir": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.cargo.buildScripts.enable": true
+}

@@ -1,0 +1,13 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "rust-analyzer.linkedProjects": [
+            "flashcards/Cargo.toml"
+        ],
+        "rust-analyzer.cargo.targetDir": true
+    }
+}

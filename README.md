@@ -1,44 +1,58 @@
-This is an app named Language Flashcards 🈶
+# Language Flashcards
 
-A modern web-based flashcard app for learning languages, built with Rust and Yew.
-Features
-Multi-Column Learning
+Language Flashcards is a Rust and Yew web application for studying vocabulary from CSV datasets.
 
-Import flashcards from CSV files with up to 3 columns in UTF-8 format. Perfect for languages like Chinese with character, pinyin, and translation:
+## Features
 
-阿姨,āyí,aunt
-啊,a,ah
-矮,ǎi,short
+- Import UTF-8 CSV flashcards with word, optional pinyin, translation, and known state.
+- Switch between normal and reverse study directions.
+- Shuffle unknown cards and progress through three reveal stages.
+- Manage multiple datasets stored in browser local storage.
+- Export the current dataset back to CSV with progress preserved.
 
-Flexible Study Modes
+## Project Structure
 
-    Study Directions: Switch between normal (Character → Pinyin → Translation) and reverse (Translation → Pinyin → Character) modes
-    Randomize: Shuffle cards to avoid memorizing order
-    Progressive Learning: Cards progress through 3 study stages
+The Rust workspace lives under `flashcards/`.
 
-Dataset Management
+```text
+flashcards/
+|- Cargo.toml
+|- Cargo.lock
+|- frontend/
+|  |- Cargo.toml
+|  |- Trunk.toml
+|  |- index.html
+|  '- src/
+|     |- app.rs
+|     |- csv_io.rs
+|     |- main.rs
+|     |- model.rs
+|     '- storage.rs
+```
 
-    Multiple Datasets: Create and manage separate datasets (e.g., HSK 1, Business Terms)
-    Independent Progress: Each dataset tracks its own known/unknown cards
-    Auto-Save: Changes are automatically saved to browser storage
+## Development
 
-Card Operations
+Format the workspace:
 
-    Mark as Known: Move cards from the unknown pile to track progress
-    Track Progress: See progress counter showing known vs. total cards
-    Restore Cards: Move previously known cards back to study if needed
-    Delete Cards: Remove unwanted flashcards
+```powershell
+cargo fmt --manifest-path .\flashcards\Cargo.toml
+```
 
-File Management
+Check the workspace:
 
-    Import CSV: Upload flashcard data from CSV files
-    Download Progress: Export current dataset with progress tracking
-    Local Storage: All data persists in browser local storage
+```powershell
+cargo check --manifest-path .\flashcards\Cargo.toml
+```
 
-Technology Stack
+Run the frontend locally with Trunk:
 
-    Frontend: Rust with Yew framework
-    Build Tools: Cargo and Trunk
-    Storage: Browser LocalStorage for data persistence
-    Data Format: CSV for import/export
+```powershell
+cd .\flashcards\frontend
+trunk serve
+```
+
+## Notes
+
+- Generated output such as `target/` and `frontend/dist/` is intentionally ignored.
+- The frontend crate is organized by responsibility: UI in `app.rs`, domain types in `model.rs`, persistence in `storage.rs`, and CSV handling in `csv_io.rs`.
 
