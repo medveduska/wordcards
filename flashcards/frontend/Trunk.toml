@@ -1,6 +1,7 @@
 [build]
 target = "index.html"
 dist = "dist"
+no_sri = true
 
 [serve]
 port = 3000
