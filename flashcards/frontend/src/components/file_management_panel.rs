@@ -10,14 +10,23 @@ pub struct FileManagementPanelProps {
 #[function_component(FileManagementPanel)]
 pub fn file_management_panel(props: &FileManagementPanelProps) -> Html {
     html! {
-        <div style="margin: 20px 0; padding: 12px; background-color: #f5f5f5; border-radius: 8px;">
-            <h3 style="margin-top: 0;">{"File Management"}</h3>
-            <div style="margin-bottom: 12px;">
-                <input type="file" accept=".csv" onchange={props.on_file_select.clone()} />
+        <section class="panel">
+            <h3 class="panel-title">{"Export / Import"}</h3>
+            <div class="panel-content">
+                <div class="import-group">
+                    <label class="input-label" for="import-flashcards-input">{"Import Flashcards"}</label>
+                    <input
+                        id="import-flashcards-input"
+                        class="file-input"
+                        type="file"
+                        accept=".csv"
+                        onchange={props.on_file_select.clone()}
+                    />
+                </div>
             </div>
-            <button onclick={props.on_download.clone()}>
-                {"Download Flashcards"}
+            <button class="btn btn-primary" onclick={props.on_download.clone()}>
+                {"Export Flashcards"}
             </button>
-        </div>
+        </section>
     }
 }

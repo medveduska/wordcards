@@ -12,14 +12,14 @@ pub struct KnownCardsTableProps {
 #[function_component(KnownCardsTable)]
 pub fn known_cards_table(props: &KnownCardsTableProps) -> Html {
     html! {
-        <>
-            <h3 style="margin-top: 40px;">{"Known Words"}</h3>
-            <table style="margin: 0 auto; border-collapse: collapse;">
+        <section class="known-panel">
+            <h3 class="panel-title known-title">{"Known Words"}</h3>
+            <table class="known-table">
                 <tr>
-                    <th style="padding: 5px; border-bottom: 1px solid #ccc;">{"Word"}</th>
-                    <th style="padding: 5px; border-bottom: 1px solid #ccc;">{"Pinyin"}</th>
-                    <th style="padding: 5px; border-bottom: 1px solid #ccc;">{"Translation"}</th>
-                    <th style="padding: 5px; border-bottom: 1px solid #ccc;">{"Action"}</th>
+                    <th>{"Word"}</th>
+                    <th>{"Pinyin"}</th>
+                    <th>{"Translation"}</th>
+                    <th>{"Action"}</th>
                 </tr>
                 { for props.known_cards.iter().enumerate().map(|(index, card)| {
                     let on_restore = props.on_restore.clone();
@@ -27,17 +27,19 @@ pub fn known_cards_table(props: &KnownCardsTableProps) -> Html {
 
                     html! {
                         <tr>
-                            <td style="padding: 5px;">{ &card.word }</td>
-                            <td style="padding: 5px;">{ card.pinyin.as_deref().unwrap_or_default() }</td>
-                            <td style="padding: 5px;">{ &card.translation }</td>
-                            <td style="padding: 5px;">
-                                <button onclick={Callback::from(move |_| on_restore.emit(index))}>{"Restore"}</button>
-                                <button onclick={Callback::from(move |_| on_delete.emit(index))} style="margin-left: 5px; background-color: #ffebee; color: #d32f2f;">{"Delete"}</button>
+                            <td>{ &card.word }</td>
+                            <td>{ card.pinyin.as_deref().unwrap_or_default() }</td>
+                            <td>{ &card.translation }</td>
+                            <td class="known-actions-cell">
+                                <div class="known-actions-group">
+                                    <button class="btn btn-secondary" onclick={Callback::from(move |_| on_restore.emit(index))}>{"Restore"}</button>
+                                    <button class="btn btn-danger" onclick={Callback::from(move |_| on_delete.emit(index))}>{"Delete"}</button>
+                                </div>
                             </td>
                         </tr>
                     }
                 }) }
             </table>
-        </>
+        </section>
     }
 }

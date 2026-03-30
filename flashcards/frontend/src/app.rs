@@ -508,7 +508,7 @@ pub fn app() -> Html {
         let total = flashcards.len() + known_cards.len();
         if total > 0 {
             html! {
-                <p style="margin-top:10px; font-weight:bold;">
+                <p class="status-chip">
                     { format!("Known: {} / {}", known_cards.len(), total) }
                 </p>
             }
@@ -519,7 +519,7 @@ pub fn app() -> Html {
 
     let position_counter = if !flashcards.is_empty() {
         html! {
-            <p style="margin-top:5px; color:#555;">
+            <p class="position-counter">
                 { format!("Unknown card: {} / {}", *current_index + 1, flashcards.len()) }
             </p>
         }
@@ -532,8 +532,11 @@ pub fn app() -> Html {
         .map(|card| display_text(card, *direction, *stage));
 
     html! {
-        <div style="font-family: sans-serif; text-align: center; margin-top: 40px;">
-            <h1>{"Language Flashcards 🈶"}</h1>
+        <div class="app-shell">
+            <header class="app-header">
+                <h1 class="app-title">{"Language Flashcards 🈶"}</h1>
+                <p class="app-subtitle">{"Build your vocabulary with cleaner practice sessions and smarter review flow."}</p>
+            </header>
 
             <DatasetPanel
                 datasets={(*datasets_list).clone()}
@@ -574,17 +577,22 @@ pub fn app() -> Html {
                 on_cancel={close_add.clone()}
             />
 
-            { progress_bar }
-            { position_counter }
+            <section class="unknown-panel panel">
+                <h3 class="panel-title">{"Unknown Words"}</h3>
+                <div class="unknown-meta">
+                    { progress_bar }
+                    { position_counter }
+                </div>
 
-            <FlashcardView
-                card_text={current_card_text}
-                on_card_click={on_card_click.clone()}
-                on_prev={prev_card.clone()}
-                on_mark_known={mark_known.clone()}
-                on_delete={delete_flashcard.clone()}
-                on_next={next_card.clone()}
-            />
+                <FlashcardView
+                    card_text={current_card_text}
+                    on_card_click={on_card_click.clone()}
+                    on_prev={prev_card.clone()}
+                    on_mark_known={mark_known.clone()}
+                    on_delete={delete_flashcard.clone()}
+                    on_next={next_card.clone()}
+                />
+            </section>
 
             <KnownCardsTable
                 known_cards={(*known_cards).clone()}

@@ -21,20 +21,20 @@ pub fn add_flashcard_form(props: &AddFlashcardFormProps) -> Html {
     }
 
     html! {
-        <div style="margin-top:20px; padding:12px; border:1px solid #ddd; display:inline-block; text-align:left; border-radius:8px;">
-            <h3 style="margin:0 0 8px 0;">{"Add New Flashcard"}</h3>
-            <div style="margin-bottom:8px;">
-                <input placeholder="Chinese character" value={props.new_word.clone()} oninput={props.on_word_input.clone()} />
+        <div class="panel add-form-panel">
+            <h3 class="panel-title">{"Add New Flashcard"}</h3>
+            <div class="field-row">
+                <input class="text-input" placeholder="Chinese character" value={props.new_word.clone()} oninput={props.on_word_input.clone()} />
             </div>
-            <div style="margin-bottom:8px;">
-                <input placeholder="Pinyin" value={props.new_pinyin.clone()} oninput={props.on_pinyin_input.clone()} />
+            <div class="field-row">
+                <input class="text-input" placeholder="Pinyin" value={props.new_pinyin.clone()} oninput={props.on_pinyin_input.clone()} />
             </div>
-            <div style="margin-bottom:8px;">
-                <input placeholder="Translation" value={props.new_translation.clone()} oninput={props.on_translation_input.clone()} />
+            <div class="field-row">
+                <input class="text-input" placeholder="Translation" value={props.new_translation.clone()} oninput={props.on_translation_input.clone()} />
             </div>
-            <div>
-                <button onclick={props.on_save.clone()}>{"Save"}</button>
-                <button onclick={props.on_cancel.clone()} style="margin-left:8px;">{"Cancel"}</button>
+            <div class="form-actions">
+                <button class="btn btn-primary" onclick={props.on_save.clone()}>{"Save"}</button>
+                <button class="btn btn-muted" onclick={props.on_cancel.clone()}>{"Cancel"}</button>
             </div>
         </div>
     }
