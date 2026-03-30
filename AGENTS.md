@@ -15,6 +15,8 @@ This repository contains a Rust workspace for a Yew frontend application. The ac
 
 - `flashcards/Cargo.toml`: workspace manifest.
 - `flashcards/frontend`: Yew frontend crate.
+- `flashcards/frontend/index.html`: document shell that loads the shared fonts and stylesheet.
+- `flashcards/frontend/styles.css`: shared application stylesheet for layout, components, tokens, and animations.
 - `flashcards/frontend/src/app.rs`: main application component and orchestration.
 - `flashcards/frontend/src/model.rs`: serializable domain types.
 - `flashcards/frontend/src/storage.rs`: browser local-storage helpers.
@@ -39,5 +41,8 @@ trunk serve
 ## Refactor Guidance
 
 - If UI code grows, split presentational sections into additional modules under `flashcards/frontend/src/`.
+- Keep styling centralized in `flashcards/frontend/styles.css`; prefer reusable class-based styling over inline styles or per-component CSS files.
+- Extend the existing CSS custom properties in `:root` for colors, surfaces, and shadows before introducing new one-off values.
+- Follow the existing dash-separated class naming and shared utility patterns such as `panel`, `btn`, and `*-actions` when adding UI.
 - Keep pure data and transformation logic outside Yew callbacks when practical so it remains easy to test.
 - Prefer fixing structure and ownership boundaries before adding abstractions.
