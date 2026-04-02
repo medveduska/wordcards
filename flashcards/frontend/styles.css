@@ -432,6 +432,24 @@ body {
     flex-shrink: 0;
 }
 
+/* ── Footer ─────────────────────────────────────────────── */
+
+.app-footer {
+    margin-top: 8px;
+    padding-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.app-footer a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.app-footer a:hover {
+    text-decoration: underline;
+}
+
 .help-body {
     margin-top: 18px;
     display: flex;

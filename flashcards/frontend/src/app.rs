@@ -618,6 +618,11 @@ pub fn app() -> Html {
                 on_restore={restore_card.clone()}
                 on_delete={delete_known_card.clone()}
             />
+
+            <footer class="app-footer">
+                {"Companion vocabulary tool for learners using "}
+                <a href="https://chinesewithbaiba.eu" target="_blank" rel="noopener noreferrer">{"chinesewithbaiba.eu"}</a>
+            </footer>
         </div>
     }
 }
