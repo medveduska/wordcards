@@ -148,6 +148,42 @@ body {
     outline-offset: 1px;
 }
 
+.dataset-rename-subaction {
+    width: 100%;
+    border: 0;
+    border-top: 1px solid #bde8e4;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    background: transparent;
+    color: #0c6e68;
+    font-size: 0.77rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.38rem 0.5rem 0.32rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+    transition: color 140ms ease, background-color 160ms ease;
+}
+
+.dataset-rename-subaction:hover {
+    background: #e4f7f6;
+    color: #0a4f4a;
+}
+
+.dataset-rename-subaction:focus-visible {
+    outline: 2px solid rgba(15, 132, 122, 0.26);
+    outline-offset: 1px;
+}
+
+.inline-rename-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 8px 6px 6px;
+}
+
 .dataset-btn.is-selected {
     border-color: #0f847a;
     background: #e4f7f6;
@@ -278,6 +314,30 @@ body {
     border: 1px solid var(--chip-border);
     background: var(--chip-bg);
     font-weight: 700;
+}
+
+.status-badge-known {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--chip-border);
+    background: var(--chip-bg);
+    color: #0c5551;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-badge-unknown {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid #d9cbc0;
+    background: #faf5f0;
+    color: #6b4f37;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 .position-counter {

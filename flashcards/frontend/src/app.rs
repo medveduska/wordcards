@@ -78,6 +78,9 @@ pub fn app() -> Html {
     let new_word = use_state(String::new);
     let new_pinyin = use_state(String::new);
     let new_translation = use_state(String::new);
+    let renaming_dataset = use_state(|| None::<String>);
+    let rename_input = use_state(String::new);
+    let show_unknown_in_table = use_state(|| false);
 
     {
         let flashcards = flashcards.clone();
@@ -225,6 +228,63 @@ pub fn app() -> Html {
         })
     };
 
+    let on_start_rename = {
+        let renaming_dataset = renaming_dataset.clone();
+        let rename_input = rename_input.clone();
+        Callback::from(move |name: String| {
+            rename_input.set(name.clone());
+            renaming_dataset.set(Some(name));
+        })
+    };
+
+    let oninput_rename = {
+        let rename_input = rename_input.clone();
+        Callback::from(move |event: InputEvent| {
+            if let Some(input) = event.target_dyn_into::<HtmlInputElement>() {
+                rename_input.set(input.value());
+            }
+        })
+    };
+
+    let confirm_rename = {
+        let renaming_dataset = renaming_dataset.clone();
+        let rename_input = rename_input.clone();
+        let datasets_list = datasets_list.clone();
+        let current_dataset = current_dataset.clone();
+        Callback::from(move |_: MouseEvent| {
+            let new_name = (*rename_input).trim().to_string();
+            if new_name.is_empty() {
+                return;
+            }
+            let Some(old_name) = (*renaming_dataset).clone() else {
+                return;
+            };
+            let mut datasets = (*datasets_list).clone();
+            if new_name != old_name && datasets.iter().any(|d| d.name == new_name) {
+                return;
+            }
+            if let Some(dataset) = datasets.iter_mut().find(|d| d.name == old_name) {
+                dataset.name = new_name.clone();
+            }
+            if *current_dataset == old_name {
+                current_dataset.set(new_name.clone());
+            }
+            datasets_list.set(datasets.clone());
+            save_datasets(&datasets);
+            renaming_dataset.set(None);
+            rename_input.set(String::new());
+        })
+    };
+
+    let cancel_rename = {
+        let renaming_dataset = renaming_dataset.clone();
+        let rename_input = rename_input.clone();
+        Callback::from(move |_: MouseEvent| {
+            renaming_dataset.set(None);
+            rename_input.set(String::new());
+        })
+    };
+
     let on_file_select = {
         let flashcards = flashcards.clone();
         let known_cards = known_cards.clone();
@@ -364,6 +424,68 @@ pub fn app() -> Html {
             if index < known.len() {
                 known.remove(index);
                 known_cards.set(known);
+            }
+        })
+    };
+
+    let on_toggle_unknown_in_table = {
+        let show_unknown_in_table = show_unknown_in_table.clone();
+        Callback::from(move |_: MouseEvent| {
+            show_unknown_in_table.set(!*show_unknown_in_table);
+        })
+    };
+
+    let mark_known_from_table = {
+        let flashcards = flashcards.clone();
+        let known_cards = known_cards.clone();
+        let current_index = current_index.clone();
+        let stage = stage.clone();
+        Callback::from(move |index: usize| {
+            let mut list = (*flashcards).clone();
+            if index < list.len() {
+                let mut card = list.remove(index);
+                card.known = true;
+                let mut known = (*known_cards).clone();
+                known.push(card);
+                known_cards.set(known);
+                if list.is_empty() {
+                    flashcards.set(Vec::new());
+                    current_index.set(0);
+                } else {
+                    let new_idx = if *current_index >= list.len() {
+                        0
+                    } else {
+                        *current_index
+                    };
+                    flashcards.set(list);
+                    current_index.set(new_idx);
+                }
+                stage.set(FlashcardStage::First);
+            }
+        })
+    };
+
+    let delete_unknown_from_table = {
+        let flashcards = flashcards.clone();
+        let current_index = current_index.clone();
+        let stage = stage.clone();
+        Callback::from(move |index: usize| {
+            let mut list = (*flashcards).clone();
+            if index < list.len() {
+                list.remove(index);
+                if list.is_empty() {
+                    flashcards.set(Vec::new());
+                    current_index.set(0);
+                } else {
+                    let new_idx = if *current_index >= list.len() {
+                        0
+                    } else {
+                        *current_index
+                    };
+                    flashcards.set(list);
+                    current_index.set(new_idx);
+                }
+                stage.set(FlashcardStage::First);
             }
         })
     };
@@ -565,6 +687,12 @@ pub fn app() -> Html {
                 show_export={show_export}
                 on_file_select={on_file_select.clone()}
                 on_download={update_information.clone()}
+                renaming_dataset={(*renaming_dataset).clone()}
+                rename_input={(*rename_input).clone()}
+                on_start_rename={on_start_rename.clone()}
+                on_rename_input={oninput_rename.clone()}
+                on_confirm_rename={confirm_rename.clone()}
+                on_cancel_rename={cancel_rename.clone()}
             />
 
             <StudyToolbar
@@ -587,7 +715,7 @@ pub fn app() -> Html {
             />
 
             <section class="unknown-panel panel">
-                <h3 class="panel-title">{"Unknown Words"}</h3>
+                <h3 class="panel-title">{"Flashcards"}</h3>
                 <div class="unknown-meta">
                     { position_counter }
                 </div>
@@ -604,9 +732,14 @@ pub fn app() -> Html {
 
             <KnownCardsTable
                 known_cards={(*known_cards).clone()}
+                unknown_cards={(*flashcards).clone()}
                 total={known_total}
+                show_unknown={*show_unknown_in_table}
                 on_restore={restore_card.clone()}
                 on_delete={delete_known_card.clone()}
+                on_toggle_unknown={on_toggle_unknown_in_table.clone()}
+                on_mark_known_from_table={mark_known_from_table.clone()}
+                on_delete_unknown={delete_unknown_from_table.clone()}
             />
 
             <footer class="app-footer">

@@ -104,7 +104,7 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                                     character → pinyin → translation (or reversed). \
                                     Mark a card as "}
                                     <em>{"Known"}</em>
-                                    {" to move it to the Known Words table, \
+                                    {" to move it to the Word Review table, \
                                     or use "}
                                     <em>{"Randomize"}</em>
                                     {" to shuffle the order."}
@@ -114,6 +114,48 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
 
                         <div class="help-step">
                             <span class="help-step-number">{"5"}</span>
+                            <div>
+                                <strong>{"Word Review table"}</strong>
+                                <p class="help-text">
+                                    {"The Word Review section lists all words you have marked as known. \
+                                    Use "}
+                                    <em>{"Restore"}</em>
+                                    {" to move a card back to the Flashcards section for further practice, \
+                                    or "}
+                                    <em>{"Delete"}</em>
+                                    {" to remove it permanently."}
+                                </p>
+                                <p class="help-text">
+                                    {"Click "}
+                                    <em>{"Show Unknown Words"}</em>
+                                    {" to also show cards still in the Flashcards section. \
+                                    Unknown cards appear with an \"Unknown\" badge and let you \
+                                    mark them as known or delete them directly from the table — \
+                                    useful when you want to review all words in one place without \
+                                    navigating card by card."}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="help-step">
+                            <span class="help-step-number">{"6"}</span>
+                            <div>
+                                <strong>{"Rename a wordset"}</strong>
+                                <p class="help-text">
+                                    {"Click "}
+                                    <em>{"Rename"}</em>
+                                    {" below any wordset button to edit its name inline. \
+                                    Confirm with "}
+                                    <em>{"Save"}</em>
+                                    {" or discard with "}
+                                    <em>{"Cancel"}</em>
+                                    {". Renaming is blocked if the new name is empty or already taken."}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="help-step">
+                            <span class="help-step-number">{"7"}</span>
                             <div>
                                 <strong>{"Export"}</strong>
                                 <p class="help-text">

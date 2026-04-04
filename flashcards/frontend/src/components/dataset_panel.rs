@@ -18,6 +18,12 @@ pub struct DatasetPanelProps {
     pub show_export: bool,
     pub on_file_select: Callback<Event>,
     pub on_download: Callback<MouseEvent>,
+    pub renaming_dataset: Option<String>,
+    pub rename_input: String,
+    pub on_start_rename: Callback<String>,
+    pub on_rename_input: Callback<InputEvent>,
+    pub on_confirm_rename: Callback<MouseEvent>,
+    pub on_cancel_rename: Callback<MouseEvent>,
 }
 
 #[function_component(DatasetPanel)]
@@ -29,32 +35,72 @@ pub fn dataset_panel(props: &DatasetPanelProps) -> Html {
             <div class="dataset-list">
                 { for props.datasets.iter().map(|dataset| {
                     let name = dataset.name.clone();
-                    let name_for_delete = dataset.name.clone();
                     let is_selected = props.current_dataset == dataset.name;
+                    let is_renaming = props.renaming_dataset.as_deref() == Some(dataset.name.as_str());
                     let on_select_dataset = props.on_select_dataset.clone();
                     let on_delete_dataset = props.on_delete_dataset.clone();
+                    let on_start_rename = props.on_start_rename.clone();
+                    let on_confirm_rename = props.on_confirm_rename.clone();
+                    let on_cancel_rename = props.on_cancel_rename.clone();
+                    let on_rename_input = props.on_rename_input.clone();
+                    let rename_input = props.rename_input.clone();
                     let select_class = if is_selected {
                         "btn dataset-btn is-selected"
                     } else {
                         "btn dataset-btn"
                     };
 
-                    html! {
-                        <div key={dataset.name.clone()} class="dataset-item">
-                            <button
-                                onclick={Callback::from(move |_| on_select_dataset.emit(name.clone()))}
-                                class={select_class}
-                            >
-                                { &dataset.name }
-                            </button>
-                            <button
-                                onclick={Callback::from(move |_| on_delete_dataset.emit(name_for_delete.clone()))}
-                                class="dataset-delete-subaction"
-                                title="Delete this wordset"
-                            >
-                                { "Delete" }
-                            </button>
-                        </div>
+                    if is_renaming {
+                        let name_for_delete = name.clone();
+                        html! {
+                            <div key={name} class="dataset-item">
+                                <div class="inline-rename-row">
+                                    <input
+                                        type="text"
+                                        value={rename_input}
+                                        oninput={on_rename_input}
+                                        class="text-input"
+                                    />
+                                    <button class="btn btn-primary" onclick={on_confirm_rename}>{"Save"}</button>
+                                    <button class="btn btn-secondary" onclick={on_cancel_rename}>{"Cancel"}</button>
+                                </div>
+                                <button
+                                    onclick={Callback::from(move |_| on_delete_dataset.emit(name_for_delete.clone()))}
+                                    class="dataset-delete-subaction"
+                                    title="Delete this wordset"
+                                >
+                                    { "Delete" }
+                                </button>
+                            </div>
+                        }
+                    } else {
+                        let name_for_select = name.clone();
+                        let name_for_rename = name.clone();
+                        let name_for_delete = name.clone();
+                        html! {
+                            <div key={name} class="dataset-item">
+                                <button
+                                    onclick={Callback::from(move |_| on_select_dataset.emit(name_for_select.clone()))}
+                                    class={select_class}
+                                >
+                                    { &dataset.name }
+                                </button>
+                                <button
+                                    onclick={Callback::from(move |_| on_start_rename.emit(name_for_rename.clone()))}
+                                    class="dataset-rename-subaction"
+                                    title="Rename this wordset"
+                                >
+                                    { "Rename" }
+                                </button>
+                                <button
+                                    onclick={Callback::from(move |_| on_delete_dataset.emit(name_for_delete.clone()))}
+                                    class="dataset-delete-subaction"
+                                    title="Delete this wordset"
+                                >
+                                    { "Delete" }
+                                </button>
+                            </div>
+                        }
                     }
                 }) }
             </div>
