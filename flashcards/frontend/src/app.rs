@@ -516,18 +516,7 @@ pub fn app() -> Html {
         })
     };
 
-    let progress_bar = {
-        let total = flashcards.len() + known_cards.len();
-        if total > 0 {
-            html! {
-                <p class="status-chip">
-                    { format!("Known: {} / {}", known_cards.len(), total) }
-                </p>
-            }
-        } else {
-            html! {}
-        }
-    };
+    let known_total = flashcards.len() + known_cards.len();
 
     let position_counter = if !flashcards.is_empty() {
         html! {
@@ -599,7 +588,6 @@ pub fn app() -> Html {
             <section class="unknown-panel panel">
                 <h3 class="panel-title">{"Unknown Words"}</h3>
                 <div class="unknown-meta">
-                    { progress_bar }
                     { position_counter }
                 </div>
 
@@ -615,6 +603,7 @@ pub fn app() -> Html {
 
             <KnownCardsTable
                 known_cards={(*known_cards).clone()}
+                total={known_total}
                 on_restore={restore_card.clone()}
                 on_delete={delete_known_card.clone()}
             />
