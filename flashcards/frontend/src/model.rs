@@ -48,4 +48,6 @@ pub struct PersistedState {
     pub current_index: usize,
     pub stage: FlashcardStage,
     pub direction: StudyDirection,
+    #[serde(default)]
+    pub current_dataset: String,
 }

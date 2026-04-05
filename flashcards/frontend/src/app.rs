@@ -69,7 +69,12 @@ pub fn app() -> Html {
     let reader_handle = use_state(|| None::<FileReader>);
 
     let datasets = load_datasets();
-    let current_dataset = use_state(String::new);
+    let current_dataset = use_state(|| {
+        persisted
+            .as_ref()
+            .map(|state| state.current_dataset.clone())
+            .unwrap_or_default()
+    });
     let datasets_list = use_state(move || datasets);
     let new_dataset_name = use_state(String::new);
     let show_dataset_input = use_state(|| false);
@@ -88,6 +93,7 @@ pub fn app() -> Html {
         let current_index = current_index.clone();
         let stage = stage.clone();
         let direction = direction.clone();
+        let current_dataset = current_dataset.clone();
 
         use_effect_with(
             (
@@ -96,6 +102,7 @@ pub fn app() -> Html {
                 current_index.clone(),
                 stage.clone(),
                 direction.clone(),
+                current_dataset.clone(),
             ),
             move |_| {
                 save_persisted_state(&PersistedState {
@@ -104,6 +111,7 @@ pub fn app() -> Html {
                     current_index: *current_index,
                     stage: *stage,
                     direction: *direction,
+                    current_dataset: (*current_dataset).clone(),
                 });
                 || ()
             },
