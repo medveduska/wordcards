@@ -3,7 +3,9 @@ use gloo_file::File;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use wasm_bindgen::JsCast;
-use web_sys::{Event, HtmlInputElement, InputEvent, KeyboardEvent, MouseEvent};
+use web_sys::{
+    Event, HtmlInputElement, HtmlTextAreaElement, InputEvent, KeyboardEvent, MouseEvent,
+};
 use yew::prelude::*;
 
 use crate::backup_io::{
@@ -16,7 +18,8 @@ use crate::components::flashcard_view::FlashcardView;
 use crate::components::help_panel::HelpPanel;
 use crate::components::known_cards_table::KnownCardsTable;
 use crate::components::study_toolbar::StudyToolbar;
-use crate::csv_io::{export_flashcards_csv, parse_flashcards_from_csv, trigger_csv_download};
+use crate::export_io::ExportFormat;
+use crate::import_io::ImportFormat;
 use crate::model::{Dataset, Flashcard, FlashcardStage, PersistedState, StudyDirection, StudyMode};
 use crate::storage::{load_datasets, load_persisted_state, save_datasets, save_persisted_state};
 
@@ -142,6 +145,11 @@ pub fn app() -> Html {
             .unwrap_or_default()
     });
     let reader_handle = use_state(|| None::<FileReader>);
+    let import_reader_handle = use_mut_ref(|| None::<FileReader>);
+    let import_status_message = use_state(|| None::<String>);
+    let import_status_is_error = use_state(|| false);
+    let export_status_message = use_state(|| None::<String>);
+    let export_status_is_error = use_state(|| false);
 
     let datasets = load_datasets();
     let current_dataset = use_state(|| {
@@ -158,6 +166,7 @@ pub fn app() -> Html {
     let new_word = use_state(String::new);
     let new_pinyin = use_state(String::new);
     let new_translation = use_state(String::new);
+    let new_example_sentence = use_state(String::new);
     let renaming_dataset = use_state(|| None::<String>);
     let rename_input = use_state(String::new);
     let show_unknown_in_table = use_state(|| false);
@@ -167,6 +176,25 @@ pub fn app() -> Html {
     let exercise_answer = use_state(String::new);
     let exercise_checked = use_state(|| false);
     let exercise_is_correct = use_state(|| false);
+
+    {
+        let import_reader_handle = import_reader_handle.clone();
+        let import_status_message = import_status_message.clone();
+        let export_status_message = export_status_message.clone();
+        use_effect_with(current_dataset.clone(), move |_| {
+            import_reader_handle.borrow_mut().take();
+            import_status_message.set(None);
+            export_status_message.set(None);
+            || ()
+        });
+    }
+    {
+        let import_reader_handle = import_reader_handle.clone();
+        use_effect_with((flashcards.clone(), known_cards.clone()), move |_| {
+            import_reader_handle.borrow_mut().take();
+            || ()
+        });
+    }
 
     {
         let flashcards = flashcards.clone();
@@ -238,6 +266,8 @@ pub fn app() -> Html {
         let stage = stage.clone();
         let exercise_answer = exercise_answer.clone();
         let exercise_checked = exercise_checked.clone();
+        let renaming_dataset = renaming_dataset.clone();
+        let rename_input = rename_input.clone();
 
         Callback::from(move |name: String| {
             if let Some(dataset) = datasets_list.iter().find(|dataset| dataset.name == name) {
@@ -248,6 +278,8 @@ pub fn app() -> Html {
                 exercise_answer.set(String::new());
                 exercise_checked.set(false);
                 current_dataset.set(name);
+                renaming_dataset.set(None);
+                rename_input.set(String::new());
             }
         })
     };
@@ -264,20 +296,18 @@ pub fn app() -> Html {
         let exercise_answer = exercise_answer.clone();
         let exercise_checked = exercise_checked.clone();
 
-        Callback::from(move |_| {
-            if !new_dataset_name.is_empty() {
+        Callback::from(move |_: ()| {
+            let name = new_dataset_name.trim().to_string();
+            if !name.is_empty() {
                 let mut datasets = (*datasets_list).clone();
-                if !datasets
-                    .iter()
-                    .any(|dataset| dataset.name == *new_dataset_name)
-                {
+                if !datasets.iter().any(|dataset| dataset.name == name) {
                     datasets.push(Dataset {
-                        name: (*new_dataset_name).clone(),
+                        name: name.clone(),
                         flashcards: Vec::new(),
                         known_cards: Vec::new(),
                     });
                     datasets_list.set(datasets.clone());
-                    current_dataset.set((*new_dataset_name).clone());
+                    current_dataset.set(name);
                     flashcards.set(Vec::new());
                     known_cards.set(Vec::new());
                     current_index.set(0);
@@ -285,9 +315,9 @@ pub fn app() -> Html {
                     exercise_answer.set(String::new());
                     exercise_checked.set(false);
                     save_datasets(&datasets);
+                    new_dataset_name.set(String::new());
+                    show_dataset_input.set(false);
                 }
-                new_dataset_name.set(String::new());
-                show_dataset_input.set(false);
             }
         })
     };
@@ -389,7 +419,12 @@ pub fn app() -> Html {
     let on_file_select = {
         let flashcards = flashcards.clone();
         let known_cards = known_cards.clone();
-        let reader_handle = reader_handle.clone();
+        let current_dataset = current_dataset.clone();
+        let current_index = current_index.clone();
+        let stage = stage.clone();
+        let import_reader_handle = import_reader_handle.clone();
+        let import_status_message = import_status_message.clone();
+        let import_status_is_error = import_status_is_error.clone();
         let exercise_answer = exercise_answer.clone();
         let exercise_checked = exercise_checked.clone();
 
@@ -406,25 +441,67 @@ pub fn app() -> Html {
                 return;
             };
 
+            input.set_value("");
+            import_reader_handle.borrow_mut().take();
+            if current_dataset.is_empty() || !flashcards.is_empty() || !known_cards.is_empty() {
+                import_status_is_error.set(true);
+                import_status_message.set(Some(
+                    "Select an empty wordset before importing flashcards.".into(),
+                ));
+                return;
+            }
+            let format = match ImportFormat::from_filename(&file.name()) {
+                Ok(format) => format,
+                Err(error) => {
+                    import_status_is_error.set(true);
+                    import_status_message.set(Some(error));
+                    return;
+                }
+            };
+            import_status_is_error.set(false);
+            import_status_message.set(Some("Reading your file…".to_string()));
             let file = File::from(file);
             let flashcards = flashcards.clone();
             let known_cards = known_cards.clone();
-            let reader_handle = reader_handle.clone();
+            let current_index = current_index.clone();
+            let stage = stage.clone();
+            let completion_reader_handle = import_reader_handle.clone();
+            let import_status_message = import_status_message.clone();
+            let import_status_is_error = import_status_is_error.clone();
             let exercise_answer = exercise_answer.clone();
             let exercise_checked = exercise_checked.clone();
 
-            let task = gloo_file::callbacks::read_as_text(&file, move |result| {
-                if let Ok(csv_data) = result {
-                    let all_cards = parse_flashcards_from_csv(&csv_data);
-                    let (known, unknown) = split_flashcards(all_cards);
-                    flashcards.set(unknown);
-                    known_cards.set(known);
-                    exercise_answer.set(String::new());
-                    exercise_checked.set(false);
+            let task = gloo_file::callbacks::read_as_bytes(&file, move |result| {
+                let parsed = result
+                    .map_err(|_| {
+                        "Could not read the selected file. Try selecting it again.".to_string()
+                    })
+                    .and_then(|bytes| format.parse(&bytes));
+                match parsed {
+                    Ok(all_cards) => {
+                        let count = all_cards.len();
+                        let (known, unknown) = split_flashcards(all_cards);
+                        flashcards.set(unknown);
+                        known_cards.set(known);
+                        current_index.set(0);
+                        stage.set(FlashcardStage::First);
+                        exercise_answer.set(String::new());
+                        exercise_checked.set(false);
+                        import_status_is_error.set(false);
+                        import_status_message
+                            .set(Some(format!("Imported {count} flashcards successfully.")));
+                    }
+                    Err(error) => {
+                        import_status_is_error.set(true);
+                        import_status_message.set(Some(format!(
+                            "Import failed. {error} No cards were imported."
+                        )));
+                    }
                 }
+                completion_reader_handle.borrow_mut().take();
             });
 
-            reader_handle.set(Some(task));
+            *import_reader_handle.borrow_mut() = Some(task);
         })
     };
 
@@ -964,11 +1041,21 @@ pub fn app() -> Html {
         })
     };
 
+    let oninput_new_example_sentence = {
+        let new_example_sentence = new_example_sentence.clone();
+        Callback::from(move |event: InputEvent| {
+            if let Some(input) = event.target_dyn_into::<HtmlTextAreaElement>() {
+                new_example_sentence.set(input.value());
+            }
+        })
+    };
+
     let save_new = {
         let flashcards = flashcards.clone();
         let new_word = new_word.clone();
         let new_pinyin = new_pinyin.clone();
         let new_translation = new_translation.clone();
+        let new_example_sentence = new_example_sentence.clone();
         let show_add = show_add.clone();
         let exercise_answer = exercise_answer.clone();
         let exercise_checked = exercise_checked.clone();
@@ -985,6 +1072,8 @@ pub fn app() -> Html {
                 word: (*new_word).clone(),
                 pinyin,
                 translation: (*new_translation).clone(),
+                example_sentence: (!new_example_sentence.trim().is_empty())
+                    .then(|| (*new_example_sentence).clone()),
                 known: false,
             });
 
@@ -992,19 +1081,37 @@ pub fn app() -> Html {
             new_word.set(String::new());
             new_pinyin.set(String::new());
             new_translation.set(String::new());
+            new_example_sentence.set(String::new());
             show_add.set(false);
             exercise_answer.set(String::new());
             exercise_checked.set(false);
         })
     };
 
-    let update_information = {
+    let export_wordset = {
         let flashcards = flashcards.clone();
         let known_cards = known_cards.clone();
+        let export_status_message = export_status_message.clone();
+        let export_status_is_error = export_status_is_error.clone();
 
-        Callback::from(move |_| {
-            if let Ok(bytes) = export_flashcards_csv(flashcards.iter().chain(known_cards.iter())) {
-                let _ = trigger_csv_download(&bytes, "updated_flashcards.csv");
+        Callback::from(move |format: ExportFormat| {
+            let result = format
+                .export(flashcards.iter().chain(known_cards.iter()))
+                .and_then(|bytes| {
+                    format.start_download(&bytes).map_err(|_| {
+                        "Could not start the download. Try exporting again.".to_string()
+                    })
+                });
+            match result {
+                Ok(()) => {
+                    export_status_is_error.set(false);
+                    export_status_message
+                        .set(Some(format!("{} download started.", format.label())));
+                }
+                Err(error) => {
+                    export_status_is_error.set(true);
+                    export_status_message.set(Some(error));
+                }
             }
         })
     };
@@ -1087,15 +1194,20 @@ pub fn app() -> Html {
                 }}
                 on_dataset_name_input={oninput_dataset_name.clone()}
                 on_create_dataset={add_new_dataset.clone()}
+                on_add_card={open_add.clone()}
                 on_save_all={save_all_progress.clone()}
                 on_open_backup_picker={open_backup_picker.clone()}
                 on_backup_file_select={on_backup_file_select.clone()}
                 backup_status_message={(*backup_status_message).clone()}
                 backup_status_is_error={*backup_status_is_error}
                 show_import={show_import}
+                import_status_message={(*import_status_message).clone()}
+                import_status_is_error={*import_status_is_error}
                 show_export={show_export}
                 on_file_select={on_file_select.clone()}
-                on_download={update_information.clone()}
+                on_download={export_wordset.clone()}
+                export_status_message={(*export_status_message).clone()}
+                export_status_is_error={*export_status_is_error}
                 renaming_dataset={(*renaming_dataset).clone()}
                 rename_input={(*rename_input).clone()}
                 on_start_rename={on_start_rename.clone()}
@@ -1118,9 +1230,11 @@ pub fn app() -> Html {
                 new_word={(*new_word).clone()}
                 new_pinyin={(*new_pinyin).clone()}
                 new_translation={(*new_translation).clone()}
+                new_example_sentence={(*new_example_sentence).clone()}
                 on_word_input={oninput_new_word.clone()}
                 on_pinyin_input={oninput_new_pinyin.clone()}
                 on_translation_input={oninput_new_translation.clone()}
+                on_example_sentence_input={oninput_new_example_sentence.clone()}
                 on_save={save_new.clone()}
                 on_cancel={close_add.clone()}
             />
@@ -1132,8 +1246,10 @@ pub fn app() -> Html {
                 </div>
 
                 <FlashcardView
+                    key={format!("{}:{}:{:?}", *current_dataset, *current_index, current_card)}
                     mode={*study_mode}
                     card_text={current_card_text}
+                    example_sentence={current_card.and_then(|card| card.example_sentence.clone())}
                     card_state_class={exercise_feedback_class}
                     on_card_click={on_card_click.clone()}
                     exercise_answer={(*exercise_answer).clone()}

@@ -11,8 +11,16 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 gloo-file = "0.3"
 csv = "1"
-web-sys = { version = "0.3", features = ["FileList", "HtmlInputElement", "Blob", "Url"] }
+calamine = { version = "0.36", default-features = false }
+rust_xlsxwriter = { version = "0.100", default-features = false }
+web-sys = { version = "0.3", features = ["FileList", "HtmlInputElement", "HtmlTextAreaElement", "Blob", "BlobPropertyBag", "Url"] }
 js-sys = "0.3"
 rand = { version = "0.8", features = ["std"] }
 gloo-storage = "0.3.0"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+rust_xlsxwriter = { version = "0.100", default-features = false, features = ["wasm"] }
+
+[dev-dependencies]
+zip = { version = "8.6", default-features = false }
 
