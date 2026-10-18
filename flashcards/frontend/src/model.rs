@@ -7,6 +7,8 @@ pub struct Flashcard {
     pub word: String,
     pub pinyin: Option<String>,
     pub translation: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub example_sentence: Option<String>,
     #[serde(default)]
     pub known: bool,
 }
@@ -72,4 +74,20 @@ pub struct AppBackupSnapshot {
     pub exported_at: String,
     pub persisted_state: PersistedState,
     pub datasets: Vec<Dataset>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn existing_saved_cards_load_without_an_example_sentence() {
+        let legacy = r#"{"word":"你好","pinyin":"nǐ hǎo","translation":"hello","known":false}"#;
+        let card: Flashcard = serde_json::from_str(legacy).unwrap();
+        assert_eq!(card.example_sentence, None);
+        assert_eq!(
+            serde_json::to_value(&card).unwrap(),
+            serde_json::from_str::<serde_json::Value>(legacy).unwrap()
+        );
+    }
 }

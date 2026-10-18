@@ -1,4 +1,4 @@
-use web_sys::{InputEvent, MouseEvent};
+use web_sys::{HtmlInputElement, InputEvent, MouseEvent};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
@@ -7,15 +7,29 @@ pub struct AddFlashcardFormProps {
     pub new_word: String,
     pub new_pinyin: String,
     pub new_translation: String,
+    pub new_example_sentence: String,
     pub on_word_input: Callback<InputEvent>,
     pub on_pinyin_input: Callback<InputEvent>,
     pub on_translation_input: Callback<InputEvent>,
+    pub on_example_sentence_input: Callback<InputEvent>,
     pub on_save: Callback<MouseEvent>,
     pub on_cancel: Callback<MouseEvent>,
 }
 
 #[function_component(AddFlashcardForm)]
 pub fn add_flashcard_form(props: &AddFlashcardFormProps) -> Html {
+    let word_input = use_node_ref();
+    {
+        let word_input = word_input.clone();
+        use_effect_with(props.visible, move |visible| {
+            if *visible {
+                if let Some(input) = word_input.cast::<HtmlInputElement>() {
+                    let _ = input.focus();
+                }
+            }
+            || ()
+        });
+    }
     if !props.visible {
         return html! {};
     }
@@ -24,13 +38,24 @@ pub fn add_flashcard_form(props: &AddFlashcardFormProps) -> Html {
         <div class="panel add-form-panel">
             <h3 class="panel-title">{"Add New Flashcard"}</h3>
             <div class="field-row">
-                <input class="text-input" placeholder="Chinese character" value={props.new_word.clone()} oninput={props.on_word_input.clone()} />
+                <input ref={word_input} class="text-input" aria-label="Word" placeholder="Chinese character" value={props.new_word.clone()} oninput={props.on_word_input.clone()} />
             </div>
             <div class="field-row">
                 <input class="text-input" placeholder="Pinyin" value={props.new_pinyin.clone()} oninput={props.on_pinyin_input.clone()} />
             </div>
             <div class="field-row">
                 <input class="text-input" placeholder="Translation" value={props.new_translation.clone()} oninput={props.on_translation_input.clone()} />
+            </div>
+            <div class="field-row">
+                <label class="input-label" for="new-example-sentence">{"Example sentence (optional)"}</label>
+                <textarea
+                    id="new-example-sentence"
+                    class="text-input example-sentence-input"
+                    placeholder="e.g., 你好，很高兴认识你！"
+                    rows="3"
+                    value={props.new_example_sentence.clone()}
+                    oninput={props.on_example_sentence_input.clone()}
+                />
             </div>
             <div class="form-actions">
                 <button class="btn btn-primary" onclick={props.on_save.clone()}>{"Save"}</button>

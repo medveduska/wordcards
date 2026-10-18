@@ -31,7 +31,7 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                             <li>{"Works entirely offline after the page loads."}</li>
                             <li>{"Progress is saved automatically between sessions."}</li>
                             <li>{"Supports Chinese characters, pinyin, and a translation field."}</li>
-                            <li>{"Export your cards at any time as a CSV file from the Wordsets panel."}</li>
+                            <li>{"Export your cards at any time as CSV or Excel (.xlsx) from the Wordsets panel."}</li>
                         </ul>
                     </div>
 
@@ -45,9 +45,9 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                             <div>
                                 <strong>{"Create or select a wordset"}</strong>
                                 <p class="help-text">
-                                    {"Use the Wordsets panel to create a named collection of flashcards \
-                                    (e.g., \"HSK 1\" or \"Week 3 vocabulary\"). \
-                                    Click an existing wordset button to switch to it."}
+                                    {"In Wordsets, choose New wordset, give it a name, then press Create wordset (or Enter). \
+                                    The name field is already open for your first collection. \
+                                    Choose an existing wordset from Your wordsets to switch to it."}
                                 </p>
                             </div>
                         </div>
@@ -55,28 +55,33 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                         <div class="help-step">
                             <span class="help-step-number">{"2"}</span>
                             <div>
-                                <strong>{"Import a CSV file"}</strong>
+                                <strong>{"Import a CSV or XLSX file"}</strong>
                                 <p class="help-text">
                                     {"After creating a new empty wordset, an Import option appears inside the Wordsets panel. Click "}
-                                    <em>{"Choose File"}</em>
-                                    {" and select a CSV file. \
-                                    Each row should have up to four columns:"}
+                                    <em>{"Choose CSV or XLSX"}</em>
+                                    {" and select a UTF-8 CSV (.csv) or Excel (.xlsx) file. \
+                                    XLSX imports read only the first worksheet, using columns A–E. \
+                                    Each row must have three columns, plus optional example sentence and known columns:"}
                                 </p>
                                 <div class="csv-format-block">
-                                    <code>{"word, pinyin, translation, known"}</code>
+                                    <code>{"word, pinyin, translation, example_sentence, known"}</code>
                                 </div>
                                 <ul class="help-list">
                                     <li><strong>{"word"}</strong>{" — the term to study (e.g., a Chinese character)."}</li>
                                     <li><strong>{"pinyin"}</strong>{" — pronunciation hint, optional."}</li>
                                     <li><strong>{"translation"}</strong>{" — the meaning in your language."}</li>
-                                    <li><strong>{"known"}</strong>{" — write "}<code>{"true"}</code>{" if already mastered, otherwise leave blank or write "}<code>{"false"}</code>{"."}</li>
+                                    <li><strong>{"example_sentence"}</strong>{" — optional example sentence in column 4. Click or tap Example sentence below a flashcard to reveal it."}</li>
+                                    <li><strong>{"known"}</strong>{" — optional column 5: write "}<code>{"true"}</code>{" if already mastered, otherwise leave blank or write "}<code>{"false"}</code>{"."}</li>
                                 </ul>
                                 <p class="help-text">{"Example row:"}</p>
                                 <div class="csv-format-block">
-                                    <code>{"你好,nǐ hǎo,Hello,false"}</code>
+                                    <code>{"你好,nǐ hǎo,Hello,你好，很高兴认识你！,false"}</code>
                                 </div>
                                 <p class="help-text help-text-muted">
-                                    {"The file does not need a header row. \
+                                    {"Pinyin may be blank, but keep its column between word and translation. \
+                                    Word and translation are required. A matching header row is optional. \
+                                    Older four-column files with true/false in column 4 still import known status. Use an example_sentence header if your example is literally true or false. \
+                                    Invalid encoding, garbled characters, unsupported file types, and invalid rows show an error; no cards are imported until the whole file is valid. \
                                     Import is only available while the wordset is empty, \
                                     so it cannot overwrite cards you have already added."}
                                 </p>
@@ -89,8 +94,8 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                                 <strong>{"Add cards manually"}</strong>
                                 <p class="help-text">
                                     {"Click "}
-                                    <em>{"Add New Flashcard"}</em>
-                                    {" in the Study Controls panel to add a single card without a CSV file."}
+                                    <em>{"Add your first card"}</em>
+                                    {" in an empty wordset, or Add a card in your current wordset, to enter a word and an optional example sentence. Add New Flashcard is also available in Study Controls. Example sentences start hidden on every card; click or tap the Example sentence row to show or hide one."}
                                 </p>
                             </div>
                         </div>
@@ -147,11 +152,11 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                             <div>
                                 <strong>{"Rename a wordset"}</strong>
                                 <p class="help-text">
-                                    {"Click "}
-                                    <em>{"Rename"}</em>
-                                    {" below any wordset button to edit its name inline. \
+                                    {"Select the wordset, open Options, then choose "}
+                                    <em>{"Rename wordset"}</em>
+                                    {" to edit its name. \
                                     Confirm with "}
-                                    <em>{"Save"}</em>
+                                    <em>{"Save name"}</em>
                                     {" or discard with "}
                                     <em>{"Cancel"}</em>
                                     {". Renaming is blocked if the new name is empty or already taken."}
@@ -164,11 +169,14 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                             <div>
                                 <strong>{"Export the active wordset"}</strong>
                                 <p class="help-text">
-                                    {"Click "}
-                                    <em>{"Export Flashcards"}</em>
+                                    {"Open Export wordset, then choose "}
+                                    <em>{"Export CSV"}</em>
+                                    {" or "}
+                                    <em>{"Export XLSX"}</em>
                                     {" in the Wordsets panel to save the currently selected wordset's cards \
-                                    (including known/unknown status) as a CSV file for backup or sharing. \
-                                    The export button is available whenever a wordset is selected."}
+                                    (including example sentences and known/unknown status) for backup or sharing. \
+                                    Both formats include headers and can be imported into an empty wordset. \
+                                    Export is available whenever a wordset is selected."}
                                 </p>
                             </div>
                         </div>
@@ -179,16 +187,16 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                                 <strong>{"Save and restore your entire progress"}</strong>
                                 <p class="help-text">
                                     {"The "}
-                                    <em>{"Full Progress Backup"}</em>
-                                    {" section in the Wordsets panel lets you download and restore your complete app state:"}
+                                    <em>{"Backup & restore"}</em>
+                                    {" section at the bottom of Wordsets lets you download and restore your complete app state:"}
                                 </p>
                                 <ul class="help-list">
-                                    <li><strong>{"Save All"}</strong>{" — downloads every wordset and your current study position (which card you're on, normal vs. reverse mode, etc.) as a single JSON backup file."}</li>
-                                    <li><strong>{"Load"}</strong>{" — restores your entire app state from a previously saved backup file. This replaces all current wordsets and study progress."}</li>
+                                    <li><strong>{"Download full backup"}</strong>{" — downloads every wordset and your current study position (which card you're on, normal vs. reverse mode, etc.) as a single JSON backup file."}</li>
+                                    <li><strong>{"Restore a backup"}</strong>{" — restores your entire app state from a previously saved backup file. This replaces all current wordsets and study progress."}</li>
                                 </ul>
                                 <p class="help-text help-text-muted">
                                     {"Use this feature to switch devices, back up your learning history, or recover after clearing browser data. \
-                                    Unlike Export (which saves only the active wordset as CSV), Save All captures everything in a portable format."}
+                                    Unlike Export (which saves only the active wordset as CSV or XLSX), a full backup captures everything in a portable format."}
                                 </p>
                             </div>
                         </div>

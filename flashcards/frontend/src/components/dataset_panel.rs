@@ -1,6 +1,8 @@
-use web_sys::{Event, InputEvent, MouseEvent};
+use web_sys::{Event, InputEvent, MouseEvent, SubmitEvent};
 use yew::prelude::*;
 
+use crate::components::wordset_import::WordsetImport;
+use crate::export_io::ExportFormat;
 use crate::model::Dataset;
 
 #[derive(Properties, PartialEq)]
@@ -13,16 +15,21 @@ pub struct DatasetPanelProps {
     pub on_delete_dataset: Callback<String>,
     pub on_toggle_input: Callback<MouseEvent>,
     pub on_dataset_name_input: Callback<InputEvent>,
-    pub on_create_dataset: Callback<MouseEvent>,
+    pub on_create_dataset: Callback<()>,
+    pub on_add_card: Callback<MouseEvent>,
     pub on_save_all: Callback<MouseEvent>,
     pub on_open_backup_picker: Callback<MouseEvent>,
     pub on_backup_file_select: Callback<Event>,
     pub backup_status_message: Option<String>,
     pub backup_status_is_error: bool,
     pub show_import: bool,
+    pub import_status_message: Option<String>,
+    pub import_status_is_error: bool,
     pub show_export: bool,
     pub on_file_select: Callback<Event>,
-    pub on_download: Callback<MouseEvent>,
+    pub on_download: Callback<ExportFormat>,
+    pub export_status_message: Option<String>,
+    pub export_status_is_error: bool,
     pub renaming_dataset: Option<String>,
     pub rename_input: String,
     pub on_start_rename: Callback<String>,
@@ -31,181 +38,204 @@ pub struct DatasetPanelProps {
     pub on_cancel_rename: Callback<MouseEvent>,
 }
 
+fn status_message(message: &Option<String>, is_error: bool, class: &'static str) -> Html {
+    message
+        .as_ref()
+        .map(|message| {
+            html! {
+                <p class={classes!(class, is_error.then_some("is-error"))}
+                    role={if is_error { "alert" } else { "status" }}>{message}</p>
+            }
+        })
+        .unwrap_or_default()
+}
+
 #[function_component(DatasetPanel)]
 pub fn dataset_panel(props: &DatasetPanelProps) -> Html {
-    let backup_status = props.backup_status_message.as_ref().map(|message| {
-        let class_name = if props.backup_status_is_error {
-            "backup-status is-error"
-        } else {
-            "backup-status"
-        };
-
-        html! {
-            <p class={class_name}>{message}</p>
-        }
-    });
-
-    let dataset_list = if props.datasets.is_empty() {
-        html! { <p class="muted-note">{"No wordsets yet. Create one below."}</p> }
-    } else {
-        html! {
-            <div class="dataset-list">
-                { for props.datasets.iter().map(|dataset| {
-                    let name = dataset.name.clone();
-                    let is_selected = props.current_dataset == dataset.name;
-                    let is_renaming = props.renaming_dataset.as_deref() == Some(dataset.name.as_str());
-                    let on_select_dataset = props.on_select_dataset.clone();
-                    let on_delete_dataset = props.on_delete_dataset.clone();
-                    let on_start_rename = props.on_start_rename.clone();
-                    let on_confirm_rename = props.on_confirm_rename.clone();
-                    let on_cancel_rename = props.on_cancel_rename.clone();
-                    let on_rename_input = props.on_rename_input.clone();
-                    let rename_input = props.rename_input.clone();
-                    let select_class = if is_selected {
-                        "btn dataset-btn is-selected"
-                    } else {
-                        "btn dataset-btn"
-                    };
-
-                    if is_renaming {
-                        let name_for_delete = name.clone();
-                        html! {
-                            <div key={name} class="dataset-item">
-                                <div class="inline-rename-row">
-                                    <input
-                                        type="text"
-                                        value={rename_input}
-                                        oninput={on_rename_input}
-                                        class="text-input"
-                                    />
-                                    <button class="btn btn-primary" onclick={on_confirm_rename}>{"Save"}</button>
-                                    <button class="btn btn-secondary" onclick={on_cancel_rename}>{"Cancel"}</button>
-                                </div>
-                                <button
-                                    onclick={Callback::from(move |_| on_delete_dataset.emit(name_for_delete.clone()))}
-                                    class="dataset-delete-subaction"
-                                    title="Delete this wordset"
-                                >
-                                    { "Delete" }
-                                </button>
-                            </div>
-                        }
-                    } else {
-                        let name_for_select = name.clone();
-                        let name_for_rename = name.clone();
-                        let name_for_delete = name.clone();
-                        html! {
-                            <div key={name} class="dataset-item">
-                                <button
-                                    onclick={Callback::from(move |_| on_select_dataset.emit(name_for_select.clone()))}
-                                    class={select_class}
-                                >
-                                    { &dataset.name }
-                                </button>
-                                <button
-                                    onclick={Callback::from(move |_| on_start_rename.emit(name_for_rename.clone()))}
-                                    class="dataset-rename-subaction"
-                                    title="Rename this wordset"
-                                >
-                                    { "Rename" }
-                                </button>
-                                <button
-                                    onclick={Callback::from(move |_| on_delete_dataset.emit(name_for_delete.clone()))}
-                                    class="dataset-delete-subaction"
-                                    title="Delete this wordset"
-                                >
-                                    { "Delete" }
-                                </button>
-                            </div>
-                        }
-                    }
-                }) }
-            </div>
-        }
+    let show_create = props.show_dataset_input || props.datasets.is_empty();
+    let new_name = props.new_dataset_name.trim();
+    let duplicate_name = props
+        .datasets
+        .iter()
+        .any(|dataset| dataset.name == new_name);
+    let can_create = !new_name.is_empty() && !duplicate_name;
+    let on_create = {
+        let on_create_dataset = props.on_create_dataset.clone();
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+            if can_create {
+                on_create_dataset.emit(());
+            }
+        })
     };
+    let active = props
+        .datasets
+        .iter()
+        .find(|dataset| dataset.name == props.current_dataset);
 
     html! {
-        <section class="panel">
-            <h3 class="panel-title">{"Wordsets"}</h3>
-            <div class="panel-content">
-                { dataset_list }
+        <section class="panel wordsets-panel" aria-labelledby="wordsets-title">
+            <div class="wordsets-header">
+                <div>
+                    <h3 id="wordsets-title" class="panel-title">{"Wordsets"}</h3>
+                    <p class="wordsets-subtitle">{"Choose a wordset to study, or start a new collection."}</p>
+                </div>
+                if !show_create {
+                    <button class="btn btn-primary" onclick={props.on_toggle_input.clone()}>
+                        <span aria-hidden="true">{"＋ "}</span>{"New wordset"}
+                    </button>
+                }
             </div>
-            <div class="panel-actions">
-                <button class="btn btn-secondary" onclick={props.on_toggle_input.clone()}>
-                    { if props.show_dataset_input { "Cancel" } else { "New Wordset" } }
-                </button>
-            </div>
-            { if props.show_dataset_input {
-                html! {
-                    <div class="inline-create-row">
-                        <input
-                            type="text"
-                            placeholder="Wordset name (e.g., 'HSK 1', 'Business Terms')"
+
+            if show_create {
+                <form class="wordset-create" onsubmit={on_create}>
+                    <div class="wordset-next-step">
+                        <span class="wordset-step-number" aria-hidden="true">{"1"}</span>
+                        <div>
+                            <h4>{if props.datasets.is_empty() { "Create your first wordset" } else { "Create a new wordset" }}</h4>
+                            <p>{"Give it a name. Next, import a word list or add cards yourself."}</p>
+                        </div>
+                    </div>
+                    <label class="input-label" for="new-wordset-name">{"Wordset name"}</label>
+                    <div class="wordset-create-actions">
+                        <input id="new-wordset-name" class="text-input" type="text"
+                            placeholder="e.g. HSK 1 or This week’s words"
                             value={props.new_dataset_name.clone()}
                             oninput={props.on_dataset_name_input.clone()}
-                            class="text-input"
-                        />
-                        <button class="btn btn-primary" onclick={props.on_create_dataset.clone()}>{"Create"}</button>
+                            aria-describedby="wordset-name-feedback"
+                            aria-invalid={duplicate_name.to_string()}
+                            required={true} autofocus={true} />
+                        <button type="submit" class="btn btn-primary" disabled={!can_create}>{"Create wordset →"}</button>
+                        if !props.datasets.is_empty() {
+                            <button type="button" class="btn wordset-text-button" onclick={props.on_toggle_input.clone()}>{"Cancel"}</button>
+                        }
                     </div>
-                }
-            } else {
-                html! {}
-            } }
-            <div class="action-section">
-                <p class="action-title">{"Full Progress Backup"}</p>
-                <div class="action-button-row">
-                    <button class="btn btn-secondary" onclick={props.on_save_all.clone()}>
-                        {"Save All"}
-                    </button>
-                    <button class="btn btn-secondary" onclick={props.on_open_backup_picker.clone()}>
-                        {"Load"}
-                    </button>
-                </div>
-                <input
-                    id="load-progress-input"
-                    class="visually-hidden-input"
-                    type="file"
-                    accept=".json,application/json"
-                    onchange={props.on_backup_file_select.clone()}
-                />
-                <p class="action-description">
-                    {"Save All downloads every wordset and your current study position. Load replaces the current browser data with a backup file."}
-                </p>
-                { backup_status.unwrap_or_default() }
-            </div>
-            { if props.show_export {
-                html! {
-                    <div class="action-section">
-                        <p class="action-title">{"Export this wordset"}</p>
-                        <div class="action-button-row">
-                            <button class="btn btn-secondary" onclick={props.on_download.clone()}>
-                                {"Export Flashcards"}
-                            </button>
+                    <p id="wordset-name-feedback" class={classes!("wordset-name-feedback", duplicate_name.then_some("is-error"))}>
+                        {if duplicate_name { "This name is already taken. Try another." } else { "You can rename it later." }}
+                    </p>
+                </form>
+            }
+
+            if !props.datasets.is_empty() {
+                <div class="wordsets-layout">
+                    <nav class="wordset-library" aria-label="Choose a wordset">
+                        <p class="wordset-section-label">{format!("Your wordsets · {}", props.datasets.len())}</p>
+                        <div class="dataset-list">
+                            { for props.datasets.iter().map(|dataset| {
+                                let selected = props.current_dataset == dataset.name;
+                                let name = dataset.name.clone();
+                                let on_select = props.on_select_dataset.clone();
+                                let count = dataset.flashcards.len() + dataset.known_cards.len();
+                                html! {
+                                    <button key={dataset.name.clone()}
+                                        class={classes!("dataset-btn", selected.then_some("is-selected"))}
+                                        aria-pressed={selected.to_string()}
+                                        onclick={Callback::from(move |_| on_select.emit(name.clone()))}>
+                                        <span class="wordset-selection-dot" aria-hidden="true">{if selected { "✓" } else { "" }}</span>
+                                        <span class="wordset-list-label">
+                                            <span class="wordset-list-name">{&dataset.name}</span>
+                                            <span class="wordset-list-count">{format!("{count} {}", if count == 1 { "card" } else { "cards" })}</span>
+                                        </span>
+                                    </button>
+                                }
+                            }) }
                         </div>
-                        <p class="action-description">
-                            {"Downloads the active wordset (all cards and their known/unknown status) as a CSV file."}
-                        </p>
+                    </nav>
+                    <div class="wordset-workspace">
+                        if let Some(dataset) = active {
+                            <div class="wordset-active-header">
+                                <div class="wordset-active-heading">
+                                    <p class="wordset-section-label">{"Current wordset"}</p>
+                                    <h4>{&dataset.name}</h4>
+                                    <p class="wordset-card-count">{format!("{} to study · {} known", dataset.flashcards.len(), dataset.known_cards.len())}</p>
+                                </div>
+                                <details key={format!("options-{}-{}", dataset.name, props.renaming_dataset.is_some())} class="wordset-menu">
+                                    <summary class="wordset-menu-trigger">{"Options"}</summary>
+                                    <div class="wordset-menu-content">
+                                        <button class="btn wordset-text-button" onclick={{
+                                            let name = dataset.name.clone();
+                                            let on_rename = props.on_start_rename.clone();
+                                            Callback::from(move |_| on_rename.emit(name.clone()))
+                                        }}>{"Rename wordset"}</button>
+                                        <button class="btn btn-danger" onclick={{
+                                            let name = dataset.name.clone();
+                                            let on_delete = props.on_delete_dataset.clone();
+                                            Callback::from(move |_| on_delete.emit(name.clone()))
+                                        }}>{"Delete wordset"}</button>
+                                    </div>
+                                </details>
+                            </div>
+                            if props.renaming_dataset.as_deref() == Some(dataset.name.as_str()) {
+                                <div class="wordset-rename">
+                                    <label class="input-label" for="rename-wordset-name">{"New name"}</label>
+                                    <div class="wordset-create-actions">
+                                        <input id="rename-wordset-name" type="text" class="text-input"
+                                            value={props.rename_input.clone()} oninput={props.on_rename_input.clone()} autofocus={true} />
+                                        <button class="btn btn-primary" onclick={props.on_confirm_rename.clone()}>{"Save name"}</button>
+                                        <button class="btn wordset-text-button" onclick={props.on_cancel_rename.clone()}>{"Cancel"}</button>
+                                    </div>
+                                </div>
+                            }
+
+                            { status_message(&props.import_status_message, props.import_status_is_error, "import-status") }
+                            if props.show_import {
+                                <WordsetImport on_file_select={props.on_file_select.clone()} on_add_card={props.on_add_card.clone()} />
+                            } else {
+                                <div class="wordset-ready">
+                                    <span class="wordset-ready-icon" aria-hidden="true">{"✓"}</span>
+                                    <div>
+                                        <h4>{if dataset.flashcards.is_empty() { "All caught up" } else { "Ready when you are" }}</h4>
+                                        <p>{if dataset.flashcards.is_empty() {
+                                            "You know every card in this wordset. Add more words, or revisit them in Word Review below."
+                                        } else {
+                                            "Study your cards below, or keep growing this wordset."
+                                        }}</p>
+                                    </div>
+                                </div>
+                            }
+                            <div class="wordset-workspace-actions">
+                                if !props.show_import {
+                                    <button class="btn btn-primary" onclick={props.on_add_card.clone()}>{"＋ Add a card"}</button>
+                                    <p class="wordset-import-note">{"Want to import another list? Create a new wordset."}</p>
+                                }
+                                if props.show_export {
+                                    <details key={format!("export-{}", dataset.name)} class="wordset-menu wordset-export-menu">
+                                        <summary class="wordset-menu-trigger">{"Export wordset"}</summary>
+                                        <div class="wordset-menu-content">
+                                            <button class="btn btn-secondary" onclick={props.on_download.reform(|_: MouseEvent| ExportFormat::Csv)}>{"Export CSV"}</button>
+                                            <button class="btn btn-secondary" onclick={props.on_download.reform(|_: MouseEvent| ExportFormat::Xlsx)}>{"Export XLSX"}</button>
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                            { status_message(&props.export_status_message, props.export_status_is_error, "export-status") }
+                        } else {
+                            <div class="wordset-select-prompt">
+                                <span aria-hidden="true">{"↖"}</span>
+                                <h4>{"Choose a wordset to get started"}</h4>
+                                <p>{"Select one from your collection, or create a new one above."}</p>
+                            </div>
+                        }
                     </div>
-                }
-            } else {
-                html! {}
-            } }
-            { if props.show_import {
-                html! {
-                    <div class="import-group">
-                        <label class="input-label" for="import-flashcards-input">{"Import Flashcards"}</label>
-                        <input
-                            id="import-flashcards-input"
-                            class="file-input"
-                            type="file"
-                            accept=".csv"
-                            onchange={props.on_file_select.clone()}
-                        />
+                </div>
+            }
+
+            <div class="wordset-backup">
+                <details>
+                    <summary>{"Backup & restore"}<span>{"All wordsets and study progress"}</span></summary>
+                    <div class="wordset-backup-content">
+                        <p>{"Keep a copy of everything, or continue from a saved backup."}</p>
+                        <div class="wordset-backup-actions">
+                            <button class="btn btn-secondary" onclick={props.on_save_all.clone()}>{"Download full backup"}</button>
+                            <button class="btn wordset-text-button" onclick={props.on_open_backup_picker.clone()}>{"Restore a backup"}</button>
+                        </div>
+                        <p class="wordset-import-note">{"Restoring replaces all wordsets and study progress in this browser."}</p>
                     </div>
-                }
-            } else {
-                html! {}
-            } }
+                </details>
+                <input id="load-progress-input" class="visually-hidden-input" type="file"
+                    accept=".json,application/json" onchange={props.on_backup_file_select.clone()} />
+                { status_message(&props.backup_status_message, props.backup_status_is_error, "backup-status") }
+            </div>
         </section>
     }
 }

@@ -7,6 +7,7 @@ use crate::model::StudyMode;
 pub struct FlashcardViewProps {
     pub mode: StudyMode,
     pub card_text: Option<String>,
+    pub example_sentence: Option<String>,
     pub card_state_class: Option<&'static str>,
     pub on_card_click: Callback<MouseEvent>,
     pub exercise_answer: String,
@@ -69,6 +70,13 @@ pub fn flashcard_view(props: &FlashcardViewProps) -> Html {
                 <div class={card_classes}>
                     { card_text }
                 </div>
+            }
+
+            if let Some(sentence) = props.example_sentence.as_ref().filter(|sentence| !sentence.trim().is_empty()) {
+                <details class="example-sentence">
+                    <summary>{"Example sentence"}</summary>
+                    <p class="example-sentence-text">{sentence}</p>
+                </details>
             }
 
             {exercise_section}

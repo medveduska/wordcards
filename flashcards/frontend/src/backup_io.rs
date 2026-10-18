@@ -111,6 +111,7 @@ mod tests {
                 word: "你好".to_string(),
                 pinyin: Some("nǐ hǎo".to_string()),
                 translation: "hello".to_string(),
+                example_sentence: Some("你好，很高兴认识你！".to_string()),
                 known: false,
             }],
             known_cards: vec![],
@@ -145,6 +146,8 @@ mod tests {
         assert_eq!(decoded.version, crate::model::APP_BACKUP_VERSION);
         assert_eq!(decoded.persisted_state.current_dataset, "Basics");
         assert_eq!(decoded.datasets.len(), 1);
+        assert_eq!(decoded.persisted_state, snapshot.persisted_state);
+        assert_eq!(decoded.datasets, snapshot.datasets);
     }
 
     #[test]
