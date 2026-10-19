@@ -48,9 +48,26 @@ body {
 
 .app-title {
     margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25em;
     font-family: "Fraunces", Georgia, serif;
     font-size: clamp(2rem, 4.8vw, 3.25rem);
     letter-spacing: 0.01em;
+}
+
+.app-title > span {
+    min-width: 0;
+    text-wrap: balance;
+}
+
+.app-logo {
+    display: block;
+    flex-shrink: 0;
+    height: 1.15em;
+    width: auto;
+    object-fit: contain;
 }
 
 .app-subtitle {
