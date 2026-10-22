@@ -154,6 +154,7 @@ pub fn validate_row(
         translation: fields[2].to_string(),
         example_sentence: (!legacy_known && !fourth.trim().is_empty()).then(|| fourth.to_string()),
         known: known.eq_ignore_ascii_case("true"),
+        formatting: Default::default(),
     })
 }
 

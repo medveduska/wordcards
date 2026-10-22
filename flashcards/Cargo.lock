@@ -712,6 +712,7 @@ dependencies = [
  "gloo-file 0.3.0",
  "gloo-storage 0.3.0",
  "js-sys",
+ "quick-xml",
  "rand",
  "rust_xlsxwriter",
  "serde",

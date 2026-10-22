@@ -112,6 +112,14 @@ mod tests {
                 pinyin: Some("nǐ hǎo".to_string()),
                 translation: "hello".to_string(),
                 example_sentence: Some("你好，很高兴认识你！".to_string()),
+                formatting: crate::formatting::CardFormatting {
+                    word: crate::formatting::CellFormatting {
+                        text_color: crate::formatting::RgbColor::from_hex("FF0000"),
+                        background_color: crate::formatting::RgbColor::from_hex("FFF2CC"),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
                 known: false,
             }],
             known_cards: vec![],

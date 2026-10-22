@@ -19,6 +19,7 @@ use crate::components::help_panel::HelpPanel;
 use crate::components::known_cards_table::KnownCardsTable;
 use crate::components::study_toolbar::StudyToolbar;
 use crate::export_io::ExportFormat;
+use crate::formatting::CellFormatting;
 use crate::import_io::ImportFormat;
 use crate::model::{Dataset, Flashcard, FlashcardStage, PersistedState, StudyDirection, StudyMode};
 use crate::storage::{load_datasets, load_persisted_state, save_datasets, save_persisted_state};
@@ -27,23 +28,22 @@ fn split_flashcards(cards: Vec<Flashcard>) -> (Vec<Flashcard>, Vec<Flashcard>) {
     cards.into_iter().partition(|card| card.known)
 }
 
-fn display_text(card: &Flashcard, direction: StudyDirection, stage: FlashcardStage) -> String {
+fn display_content(
+    card: &Flashcard,
+    direction: StudyDirection,
+    stage: FlashcardStage,
+) -> (&str, &CellFormatting) {
     match (direction, stage) {
-        (StudyDirection::Normal, FlashcardStage::First) => card.word.clone(),
-        (StudyDirection::Normal, FlashcardStage::Second) => card.pinyin.clone().unwrap_or_default(),
-        (StudyDirection::Normal, FlashcardStage::Third) => card.translation.clone(),
-        (StudyDirection::Reverse, FlashcardStage::First) => card.translation.clone(),
-        (StudyDirection::Reverse, FlashcardStage::Second) => {
-            card.pinyin.clone().unwrap_or_default()
+        (StudyDirection::Normal, FlashcardStage::First)
+        | (StudyDirection::Reverse, FlashcardStage::Third) => (&card.word, &card.formatting.word),
+        (_, FlashcardStage::Second) => (
+            card.pinyin.as_deref().unwrap_or_default(),
+            &card.formatting.pinyin,
+        ),
+        (StudyDirection::Normal, FlashcardStage::Third)
+        | (StudyDirection::Reverse, FlashcardStage::First) => {
+            (&card.translation, &card.formatting.translation)
         }
-        (StudyDirection::Reverse, FlashcardStage::Third) => card.word.clone(),
-    }
-}
-
-fn exercise_prompt(card: &Flashcard, direction: StudyDirection) -> String {
-    match direction {
-        StudyDirection::Normal => card.word.clone(),
-        StudyDirection::Reverse => card.translation.clone(),
     }
 }
 
@@ -1074,6 +1074,7 @@ pub fn app() -> Html {
                 translation: (*new_translation).clone(),
                 example_sentence: (!new_example_sentence.trim().is_empty())
                     .then(|| (*new_example_sentence).clone()),
+                formatting: Default::default(),
                 known: false,
             });
 
@@ -1132,9 +1133,9 @@ pub fn app() -> Html {
     };
 
     let current_card = flashcards.get(*current_index);
-    let current_card_text = current_card.map(|card| match *study_mode {
-        StudyMode::Reveal => display_text(card, *direction, *stage),
-        StudyMode::Exercise => exercise_prompt(card, *direction),
+    let current_card_content = current_card.map(|card| match *study_mode {
+        StudyMode::Reveal => display_content(card, *direction, *stage),
+        StudyMode::Exercise => display_content(card, *direction, FlashcardStage::First),
     });
 
     let expected_answer = current_card.map(|card| exercise_expected_answer(card, *direction));
@@ -1251,8 +1252,10 @@ pub fn app() -> Html {
                 <FlashcardView
                     key={format!("{}:{}:{:?}", *current_dataset, *current_index, current_card)}
                     mode={*study_mode}
-                    card_text={current_card_text}
+                    card_text={current_card_content.map(|(text, _)| text.to_string())}
+                    card_formatting={current_card_content.map(|(_, formatting)| formatting.clone()).unwrap_or_default()}
                     example_sentence={current_card.and_then(|card| card.example_sentence.clone())}
+                    example_formatting={current_card.map(|card| card.formatting.example_sentence.clone()).unwrap_or_default()}
                     card_state_class={exercise_feedback_class}
                     on_card_click={on_card_click.clone()}
                     exercise_answer={(*exercise_answer).clone()}

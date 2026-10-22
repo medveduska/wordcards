@@ -9,6 +9,11 @@ pub struct Flashcard {
     pub translation: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub example_sentence: Option<String>,
+    #[serde(
+        default,
+        skip_serializing_if = "crate::formatting::CardFormatting::is_empty"
+    )]
+    pub formatting: crate::formatting::CardFormatting,
     #[serde(default)]
     pub known: bool,
 }
