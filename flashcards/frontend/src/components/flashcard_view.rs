@@ -1,6 +1,8 @@
 use web_sys::{InputEvent, KeyboardEvent, MouseEvent};
 use yew::prelude::*;
 
+use super::colored_text::colored_text;
+use crate::formatting::CellFormatting;
 use crate::model::StudyMode;
 
 #[derive(Properties, PartialEq)]
@@ -8,6 +10,8 @@ pub struct FlashcardViewProps {
     pub mode: StudyMode,
     pub card_text: Option<String>,
     pub example_sentence: Option<String>,
+    pub card_formatting: CellFormatting,
+    pub example_formatting: CellFormatting,
     pub card_state_class: Option<&'static str>,
     pub on_card_click: Callback<MouseEvent>,
     pub exercise_answer: String,
@@ -30,6 +34,8 @@ pub fn flashcard_view(props: &FlashcardViewProps) -> Html {
     };
 
     let card_classes = classes!("flashcard", props.card_state_class);
+    let card_style = props.card_formatting.css_variables();
+    let card_content = html! { <span class="flashcard-text">{colored_text(&card_text, &props.card_formatting)}</span> };
     let feedback_classes = classes!("exercise-feedback", props.exercise_feedback_class);
 
     let exercise_section = if props.mode == StudyMode::Exercise {
@@ -63,19 +69,20 @@ pub fn flashcard_view(props: &FlashcardViewProps) -> Html {
                 <div
                     onclick={props.on_card_click.clone()}
                     class={card_classes.clone()}
+                    style={card_style.clone()}
                 >
-                    { card_text.clone() }
+                    { card_content.clone() }
                 </div>
             } else {
-                <div class={card_classes}>
-                    { card_text }
+                <div class={card_classes} style={card_style}>
+                    { card_content }
                 </div>
             }
 
             if let Some(sentence) = props.example_sentence.as_ref().filter(|sentence| !sentence.trim().is_empty()) {
-                <details class="example-sentence">
+                <details class="example-sentence" style={props.example_formatting.css_variables()}>
                     <summary>{"Example sentence"}</summary>
-                    <p class="example-sentence-text">{sentence}</p>
+                    <p class="example-sentence-text">{colored_text(sentence, &props.example_formatting)}</p>
                 </details>
             }
 

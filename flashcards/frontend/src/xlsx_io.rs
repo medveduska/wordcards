@@ -4,10 +4,13 @@ use calamine::{DataRef, Reader, Xlsx};
 
 use crate::import_io::{header_layout, require_cards, validate_row, ImportLayout};
 use crate::model::Flashcard;
+use crate::xlsx_formatting::{read_sheet_formatting, SheetFormatting};
 
 pub fn parse_flashcards_from_xlsx(bytes: &[u8]) -> Result<Vec<Flashcard>, String> {
     let mut workbook = Xlsx::new(Cursor::new(bytes))
         .map_err(|_| "Could not open this XLSX file. It may be damaged, password-protected, or a different file type. Save it as an Excel Workbook (.xlsx) and try again.".to_string())?;
+    let formatting = read_sheet_formatting(bytes)
+        .map_err(|error| format!("Could not read Excel colors: {error}"))?;
     let sheet = workbook
         .sheet_names()
         .first()
@@ -35,6 +38,7 @@ pub fn parse_flashcards_from_xlsx(bytes: &[u8]) -> Result<Vec<Flashcard>, String
                 current_row.unwrap() as usize + 1,
                 &mut first_row,
                 &mut layout,
+                &formatting,
             )?;
             fields = Default::default();
         }
@@ -61,6 +65,7 @@ pub fn parse_flashcards_from_xlsx(bytes: &[u8]) -> Result<Vec<Flashcard>, String
             row as usize + 1,
             &mut first_row,
             &mut layout,
+            &formatting,
         )?;
     }
     require_cards(cards)
@@ -72,6 +77,7 @@ fn append_row(
     row: usize,
     first_row: &mut bool,
     layout: &mut ImportLayout,
+    formatting: &SheetFormatting,
 ) -> Result<(), String> {
     if fields.iter().all(|value| value.trim().is_empty()) {
         return Ok(());
@@ -90,7 +96,16 @@ fn append_row(
             return Ok(());
         }
     }
-    cards.push(validate_row(&fields, row, *layout)?);
+    let mut card = validate_row(&fields, row, *layout)?;
+    for column in 0..4 {
+        if column == 3 && card.example_sentence.is_none() {
+            continue;
+        }
+        if let Some(style) = formatting.get(&((row - 1) as u32, column)) {
+            *card.formatting.cell_mut(column).unwrap() = style.clone();
+        }
+    }
+    cards.push(card);
     *first_row = false;
     Ok(())
 }

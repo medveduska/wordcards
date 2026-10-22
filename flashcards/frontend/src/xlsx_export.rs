@@ -1,6 +1,8 @@
-use rust_xlsxwriter::{Format, FormatAlign, Workbook, XlsxError};
+use rust_xlsxwriter::{Color, Format, FormatAlign, Workbook, Worksheet, XlsxError};
 
+use crate::formatting::CellFormatting;
 use crate::model::Flashcard;
+use crate::xlsx_text::escape_rich_text_literals;
 
 pub fn export_flashcards_xlsx<'a>(
     cards: impl Iterator<Item = &'a Flashcard>,
@@ -24,22 +26,76 @@ pub fn export_flashcards_xlsx<'a>(
     for (index, card) in cards.enumerate() {
         let row = u32::try_from(index + 1).map_err(|_| XlsxError::RowColumnLimitError)?;
         // Explicit strings preserve Unicode, leading zeros, and formula-like text.
-        for (column, value) in [
-            card.word.as_str(),
-            card.pinyin.as_deref().unwrap_or_default(),
-            card.translation.as_str(),
-            card.example_sentence.as_deref().unwrap_or_default(),
+        for (column, (value, formatting)) in [
+            (card.word.as_str(), &card.formatting.word),
+            (
+                card.pinyin.as_deref().unwrap_or_default(),
+                &card.formatting.pinyin,
+            ),
+            (card.translation.as_str(), &card.formatting.translation),
+            (
+                card.example_sentence.as_deref().unwrap_or_default(),
+                &card.formatting.example_sentence,
+            ),
         ]
         .into_iter()
         .enumerate()
         {
-            worksheet.write_string_with_format(row, column as u16, value, &text_format)?;
+            write_colored_text(
+                worksheet,
+                row,
+                column as u16,
+                value,
+                formatting,
+                &text_format,
+            )?;
         }
         worksheet.write_boolean(row, 4, card.known)?;
         last_row = row;
     }
     worksheet.autofilter(0, 0, last_row, 4)?;
     workbook.save_to_buffer()
+}
+
+fn write_colored_text(
+    worksheet: &mut Worksheet,
+    row: u32,
+    column: u16,
+    text: &str,
+    formatting: &CellFormatting,
+    base_format: &Format,
+) -> Result<(), XlsxError> {
+    let mut format = base_format.clone();
+    if let Some(color) = formatting.text_color {
+        format = format.set_font_color(Color::RGB(color.into()));
+    }
+    if let Some(color) = formatting.background_color {
+        format = format.set_background_color(Color::RGB(color.into()));
+    }
+    if formatting.valid_runs(text) {
+        let formats: Vec<_> = formatting
+            .runs
+            .iter()
+            .map(|run| match run.color.or(formatting.text_color) {
+                Some(color) => Format::new().set_font_color(Color::RGB(color.into())),
+                None => Format::new().set_font_color(Color::Automatic),
+            })
+            .collect();
+        let strings: Vec<_> = formatting
+            .runs
+            .iter()
+            .map(|run| escape_rich_text_literals(&run.text))
+            .collect();
+        let runs: Vec<_> = formats
+            .iter()
+            .zip(&strings)
+            .map(|(format, text)| (format, text.as_str()))
+            .collect();
+        worksheet.write_rich_string_with_format(row, column, &runs, &format)?;
+    } else {
+        worksheet.write_string_with_format(row, column, text, &format)?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -56,6 +112,7 @@ mod tests {
                 pinyin: Some("nǐ hǎo".into()),
                 translation: "Hello, friend & <welcome>".into(),
                 example_sentence: Some("你好！\n\"很高兴认识你。\"".into()),
+                formatting: Default::default(),
                 known: false,
             },
             Flashcard {
@@ -63,6 +120,7 @@ mod tests {
                 pinyin: Some("".into()),
                 translation: "=1+1".into(),
                 example_sentence: Some("true".into()),
+                formatting: Default::default(),
                 known: true,
             },
         ]

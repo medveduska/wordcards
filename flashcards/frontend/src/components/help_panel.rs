@@ -178,6 +178,9 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                                     Both formats include headers and can be imported into an empty wordset. \
                                     Export is available whenever a wordset is selected."}
                                 </p>
+                                <p class="help-text">
+                                    {"Excel (.xlsx) imports and exports preserve text colors, including colored words within a sentence, and solid cell background colors. Each cell's colors appear on its flashcard face or example sentence and are saved in browser storage and JSON backups. CSV contains plain text and does not preserve colors. Conditional formatting, gradients, and patterned fills are not imported."}
+                                </p>
                             </div>
                         </div>
 

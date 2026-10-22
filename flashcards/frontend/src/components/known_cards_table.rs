@@ -1,6 +1,7 @@
 use web_sys::MouseEvent;
 use yew::prelude::*;
 
+use super::colored_text::colored_text;
 use crate::model::Flashcard;
 
 #[derive(Properties, PartialEq)]
@@ -46,9 +47,9 @@ pub fn known_cards_table(props: &KnownCardsTableProps) -> Html {
         };
         html! {
             <tr>
-                <td>{ &card.word }</td>
-                <td>{ card.pinyin.as_deref().unwrap_or_default() }</td>
-                <td>{ &card.translation }</td>
+                <td class="colored-cell" style={card.formatting.word.css_variables()}>{colored_text(&card.word, &card.formatting.word)}</td>
+                <td class="colored-cell" style={card.formatting.pinyin.css_variables()}>{colored_text(card.pinyin.as_deref().unwrap_or_default(), &card.formatting.pinyin)}</td>
+                <td class="colored-cell" style={card.formatting.translation.css_variables()}>{colored_text(&card.translation, &card.formatting.translation)}</td>
                 { status_cell }
                 <td class="known-actions-cell">
                     <div class="known-actions-group">
@@ -66,9 +67,9 @@ pub fn known_cards_table(props: &KnownCardsTableProps) -> Html {
             let on_delete = props.on_delete_unknown.clone();
             html! {
                 <tr>
-                    <td>{ &card.word }</td>
-                    <td>{ card.pinyin.as_deref().unwrap_or_default() }</td>
-                    <td>{ &card.translation }</td>
+                    <td class="colored-cell" style={card.formatting.word.css_variables()}>{colored_text(&card.word, &card.formatting.word)}</td>
+                    <td class="colored-cell" style={card.formatting.pinyin.css_variables()}>{colored_text(card.pinyin.as_deref().unwrap_or_default(), &card.formatting.pinyin)}</td>
+                    <td class="colored-cell" style={card.formatting.translation.css_variables()}>{colored_text(&card.translation, &card.formatting.translation)}</td>
                     <td><span class="status-badge-unknown">{"Unknown"}</span></td>
                     <td class="known-actions-cell">
                         <div class="known-actions-group">
