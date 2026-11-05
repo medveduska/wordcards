@@ -7,6 +7,7 @@ mod formatting;
 mod import_io;
 mod model;
 mod storage;
+mod theme;
 mod xlsx_export;
 mod xlsx_formatting;
 #[cfg(test)]
