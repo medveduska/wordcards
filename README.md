@@ -4,6 +4,7 @@ Language Flashcards is a Rust and Yew web application for studying vocabulary fr
 
 ## Features
 
+- **Dark mode**: Use the Dark mode / Light mode button beside Help for comfortable evening practice. Your choice is remembered in this browser and applied before the page appears. Imported Excel colors remain as supplied.
 - **Multi-wordset management**: Create and organize unlimited named wordsets (e.g., "HSK 1", "Week 3 vocabulary") all stored locally in your browser. A collection list shows card counts and the selected wordset. New users are guided from naming a wordset to importing a file or adding their first card. Wordset options, exports, and full backups are tucked into separate disclosures.
 - **CSV/XLSX import and export**: Import UTF-8 CSV files or the first worksheet of an XLSX workbook into an empty wordset. Invalid files show actionable errors without importing partial data. Choose Export CSV or Export XLSX to download the active wordset with example sentences and known/unknown status preserved.
 - **Excel colors**: XLSX imports and exports preserve text colors (including individual words within a sentence) and solid cell fills. Colors appear on the corresponding flashcard face, example sentence, and Word Review cells, and persist in local storage and JSON backups. CSV exports contain plain text. Conditional formatting, gradients, and patterned fills are not imported.

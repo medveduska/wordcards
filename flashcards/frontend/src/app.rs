@@ -1176,9 +1176,12 @@ pub fn app() -> Html {
                     <img class="app-logo" src="language-book.png" alt="" width="720" height="840" />
                 </h1>
                 <p class="app-subtitle">{"Build your vocabulary with cleaner practice sessions and smarter review flow."}</p>
-                <button class="btn btn-secondary btn-small help-trigger-btn" onclick={open_help}>
-                    {"? Help & About"}
-                </button>
+                <div class="header-actions">
+                    <crate::theme::ThemeToggle />
+                    <button class="btn btn-secondary btn-small" onclick={open_help}>
+                        {"? Help & About"}
+                    </button>
+                </div>
             </header>
 
             if *show_help {

@@ -4,6 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Language Flashcards</title>
+    <script>
+        // Apply the saved preference before painting to avoid a bright flash.
+        try {
+            const theme = JSON.parse(localStorage.getItem('flashcards_theme'));
+            document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+        } catch (_) {}
+    </script>
     <link data-trunk rel="icon" href="favicon.svg" type="image/svg+xml">
     <link data-trunk rel="copy-file" href="language-book.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
