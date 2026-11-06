@@ -17,6 +17,7 @@ use crate::components::dataset_panel::DatasetPanel;
 use crate::components::flashcard_view::FlashcardView;
 use crate::components::help_panel::HelpPanel;
 use crate::components::known_cards_table::KnownCardsTable;
+use crate::components::study_panel::StudyPanel;
 use crate::components::study_toolbar::StudyToolbar;
 use crate::export_io::ExportFormat;
 use crate::formatting::CellFormatting;
@@ -173,6 +174,7 @@ pub fn app() -> Html {
     let backup_status_message = use_state(|| None::<String>);
     let backup_status_is_error = use_state(|| false);
     let study_mode = use_state(StudyMode::default);
+    let show_pinyin = use_state(|| true);
     let exercise_answer = use_state(String::new);
     let exercise_checked = use_state(|| false);
     let exercise_is_correct = use_state(|| false);
@@ -674,12 +676,25 @@ pub fn app() -> Html {
 
     let on_card_click = {
         let stage = stage.clone();
+        let show_pinyin = show_pinyin.clone();
         Callback::from(move |_: MouseEvent| {
             stage.set(match *stage {
+                FlashcardStage::First if !*show_pinyin => FlashcardStage::Third,
                 FlashcardStage::First => FlashcardStage::Second,
                 FlashcardStage::Second => FlashcardStage::Third,
                 FlashcardStage::Third => FlashcardStage::First,
             });
+        })
+    };
+
+    let toggle_pinyin = {
+        let show_pinyin = show_pinyin.clone();
+        let stage = stage.clone();
+        Callback::from(move |_: MouseEvent| {
+            if *show_pinyin && *stage == FlashcardStage::Second {
+                stage.set(FlashcardStage::Third);
+            }
+            show_pinyin.set(!*show_pinyin);
         })
     };
 
@@ -1134,7 +1149,15 @@ pub fn app() -> Html {
 
     let current_card = flashcards.get(*current_index);
     let current_card_content = current_card.map(|card| match *study_mode {
-        StudyMode::Reveal => display_content(card, *direction, *stage),
+        StudyMode::Reveal => display_content(
+            card,
+            *direction,
+            if !*show_pinyin && *stage == FlashcardStage::Second {
+                FlashcardStage::Third
+            } else {
+                *stage
+            },
+        ),
         StudyMode::Exercise => display_content(card, *direction, FlashcardStage::First),
     });
 
@@ -1162,7 +1185,8 @@ pub fn app() -> Html {
         None
     };
 
-    let exercise_pinyin = if *study_mode == StudyMode::Exercise && *exercise_checked {
+    let exercise_pinyin = if *show_pinyin && *study_mode == StudyMode::Exercise && *exercise_checked
+    {
         current_card.and_then(|card| card.pinyin.clone())
     } else {
         None
@@ -1226,6 +1250,8 @@ pub fn app() -> Html {
             <StudyToolbar
                 direction={*direction}
                 mode={*study_mode}
+                show_pinyin={*show_pinyin}
+                on_toggle_pinyin={toggle_pinyin}
                 on_toggle_mode={toggle_study_mode.clone()}
                 on_toggle_direction={toggle_direction.clone()}
                 on_randomize={randomize_cards.clone()}
@@ -1246,8 +1272,7 @@ pub fn app() -> Html {
                 on_cancel={close_add.clone()}
             />
 
-            <section class="unknown-panel panel">
-                <h3 class="panel-title">{"Flashcards"}</h3>
+            <StudyPanel>
                 <div class="unknown-meta">
                     { position_counter }
                 </div>
@@ -1273,7 +1298,7 @@ pub fn app() -> Html {
                     on_delete={delete_flashcard.clone()}
                     on_next={next_card.clone()}
                 />
-            </section>
+            </StudyPanel>
 
             <KnownCardsTable
                 known_cards={(*known_cards).clone()}

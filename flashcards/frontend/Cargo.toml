@@ -15,7 +15,7 @@ calamine = { version = "0.36", default-features = false }
 quick-xml = "0.41"
 zip = { version = "8.6", default-features = false, features = ["deflate"] }
 rust_xlsxwriter = { version = "0.100", default-features = false }
-web-sys = { version = "0.3", features = ["FileList", "HtmlInputElement", "HtmlTextAreaElement", "Blob", "BlobPropertyBag", "Url"] }
+web-sys = { version = "0.3", features = ["Document", "Element", "HtmlElement", "KeyboardEvent", "NodeList", "FileList", "HtmlInputElement", "HtmlTextAreaElement", "Blob", "BlobPropertyBag", "Url"] }
 js-sys = "0.3"
 rand = { version = "0.8", features = ["std"] }
 gloo-storage = "0.3.0"
