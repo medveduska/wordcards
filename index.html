@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Language Flashcards</title>
+    <script>
+        // Apply the saved preference before painting to avoid a bright flash.
+        try {
+            const theme = JSON.parse(localStorage.getItem('flashcards_theme'));
+            document.documentElement.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+        } catch (_) {}
+    </script>
+    <link rel="icon" href="/favicon-21f6a40009d9a7d7.svg"/>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/styles-203177ce9e453599.css"/>
+<link rel="modulepreload" href="/language-flashcards-frontend-c9c87e78f313f91.js" crossorigin="anonymous"><link rel="preload" href="/language-flashcards-frontend-c4f34116c6c4bb4d_bg.wasm" crossorigin="anonymous" as="fetch" type="application/wasm"></head>
+<body>
+    <div id="root"></div>
+
+<script type="module">
+import init, * as bindings from '/language-flashcards-frontend-c9c87e78f313f91.js';
+const wasm = await init({ module_or_path: '/language-flashcards-frontend-c4f34116c6c4bb4d_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+</html>
