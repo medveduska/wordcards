@@ -7,6 +7,8 @@ use crate::model::{StudyDirection, StudyMode};
 pub struct StudyToolbarProps {
     pub direction: StudyDirection,
     pub mode: StudyMode,
+    pub show_pinyin: bool,
+    pub on_toggle_pinyin: Callback<MouseEvent>,
     pub on_toggle_mode: Callback<MouseEvent>,
     pub on_toggle_direction: Callback<MouseEvent>,
     pub on_randomize: Callback<MouseEvent>,
@@ -29,11 +31,18 @@ pub fn study_toolbar(props: &StudyToolbarProps) -> Html {
             </button>
             <button class="btn btn-secondary" onclick={props.on_toggle_direction.clone()}>
                 {
-                    match props.direction {
-                        StudyDirection::Normal => "Switch to Translation -> Pinyin -> Character",
-                        StudyDirection::Reverse => "Switch to Character -> Pinyin -> Translation",
+                    match (props.direction, props.show_pinyin) {
+                        (StudyDirection::Normal, true) => "Switch to Translation -> Pinyin -> Character",
+                        (StudyDirection::Reverse, true) => "Switch to Character -> Pinyin -> Translation",
+                        (StudyDirection::Normal, false) => "Switch to Translation -> Character",
+                        (StudyDirection::Reverse, false) => "Switch to Character -> Translation",
                     }
                 }
+            </button>
+            <button type="button" class="btn btn-secondary"
+                onclick={props.on_toggle_pinyin.clone()}
+                aria-pressed={props.show_pinyin.to_string()}>
+                {if props.show_pinyin { "Pinyin: On" } else { "Pinyin: Off" }}
             </button>
             <button class="btn btn-primary" onclick={props.on_randomize.clone()}>
                 {"Randomize"}

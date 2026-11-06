@@ -20,7 +20,7 @@ pub struct KnownCardsTableProps {
 #[function_component(KnownCardsTable)]
 pub fn known_cards_table(props: &KnownCardsTableProps) -> Html {
     let counter = if props.total > 0 {
-        html! { <p class="status-chip">{ format!("Known: {} / {}", props.known_cards.len(), props.total) }</p> }
+        html! { <span class="status-chip known-counter">{ format!("Known: {} / {}", props.known_cards.len(), props.total) }</span> }
     } else {
         html! {}
     };
@@ -85,25 +85,30 @@ pub fn known_cards_table(props: &KnownCardsTableProps) -> Html {
     };
 
     html! {
-        <section class="known-panel">
-            <h3 class="panel-title known-title">{"Word Review"}</h3>
-            { counter }
-            <div class="panel-actions">
-                <button class="btn btn-secondary" onclick={props.on_toggle_unknown.clone()}>
-                    { toggle_label }
-                </button>
+        <details class="known-panel">
+            <summary class="known-summary">
+                <h3 class="panel-title known-title">{"Word Review"}</h3>
+                { counter }
+                <span class="known-chevron" aria-hidden="true">{"›"}</span>
+            </summary>
+            <div class="panel-content">
+                <div class="panel-actions">
+                    <button class="btn btn-secondary" onclick={props.on_toggle_unknown.clone()}>
+                        { toggle_label }
+                    </button>
+                </div>
+                <table class="known-table">
+                    <tr>
+                        <th>{"Word"}</th>
+                        <th>{"Pinyin"}</th>
+                        <th>{"Translation"}</th>
+                        { status_column_header }
+                        <th>{"Action"}</th>
+                    </tr>
+                    { for known_rows }
+                    { unknown_rows }
+                </table>
             </div>
-            <table class="known-table">
-                <tr>
-                    <th>{"Word"}</th>
-                    <th>{"Pinyin"}</th>
-                    <th>{"Translation"}</th>
-                    { status_column_header }
-                    <th>{"Action"}</th>
-                </tr>
-                { for known_rows }
-                { unknown_rows }
-            </table>
-        </section>
+        </details>
     }
 }

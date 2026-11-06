@@ -117,7 +117,7 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                                     {" from Study Controls to type an answer instead of flipping stages. \
                                     After pressing Enter or "}
                                     <em>{"Check"}</em>
-                                    {", the card highlights green or red, shows the correct answer if needed, and reveals pinyin when available."}
+                                    {", the card highlights green or red, shows the correct answer if needed, and reveals pinyin when available. Use Fullscreen in the Flashcards section for focused practice; press Esc or Exit fullscreen to return."}
                                 </p>
                             </div>
                         </div>
@@ -127,7 +127,7 @@ pub fn help_panel(props: &HelpPanelProps) -> Html {
                             <div>
                                 <strong>{"Word Review table"}</strong>
                                 <p class="help-text">
-                                    {"The Word Review section lists all words you have marked as known. \
+                                    {"Click the Word Review heading to expand or collapse the section. It lists all words you have marked as known. \
                                     Use "}
                                     <em>{"Restore"}</em>
                                     {" to move a card back to the Flashcards section for further practice, \
